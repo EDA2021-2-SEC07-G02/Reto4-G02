@@ -24,6 +24,7 @@ import config as cf
 import sys
 import controller
 from DISClib.ADT import list as lt
+from time import process_time
 assert cf
 
 
@@ -34,12 +35,33 @@ se hace la solicitud al controlador para ejecutar la
 operación solicitada
 """
 
+# ___________________________________________________
+#  Variables
+# ___________________________________________________
+
+aeropuertosfile="airports_full.csv"
+rutasfile="airports_full.csv"
+ciudadesfile="worldcities.csv"
+catalog = None
+
+# ___________________________________________________
+#  Menu principal
+# ___________________________________________________
+
+
 def printMenu():
     print("Bienvenido")
-    print("1- Cargar información en el catálogo")
-    print("2- ")
+    print("0- Cargar información en el catálogo")
+    print("1- Encontrar puntos de interconexión aérea")
+    print("2- Encontrar clústeres de tráfico aéreo")
+    print("3- Encontrar la ruta más corta entre ciudades")
+    print("4- Utilizar las millas de viajero")
+    print("5- Cuantificar el efecto de un aeropuerto cerrado")
+    print("6- Comparar con servicio WEB externo")
+    print("7- Visualizar gráficamente las respuestas anteriores")
+    print("8- Salir")
 
-catalog = None
+
 
 """
 Menu principal
@@ -47,12 +69,41 @@ Menu principal
 while True:
     printMenu()
     inputs = input('Seleccione una opción para continuar\n')
-    if int(inputs[0]) == 1:
+    print("\n")
+    tiempoInicial=process_time()
+    if int(inputs[0]) == 0:
         print("Cargando información de los archivos ....")
 
+    elif int(inputs[0]) == 1:
+        print("Por implementar......")
+        pass
+
     elif int(inputs[0]) == 2:
+        print("Por implementar......")
+        pass
+
+    elif int(inputs[0]) == 3:
+        print("Por implementar......")
+        pass
+
+    elif int(inputs[0]) == 4:
+        print("Por implementar......")
+        pass
+
+    elif int(inputs[0]) == 5:
+        print("Por implementar......")
+        pass
+
+    elif int(inputs[0]) == 6:
+        print("Por implementar......")
+        pass
+
+    elif int(inputs[0]) == 7:
+        print("Por implementar......")
         pass
 
     else:
-        sys.exit(0)
-sys.exit(0)
+        sys.exit(8)
+    input("\nDuración: "+str((process_time()-tiempoInicial)*1000)+"ms\nPresione enter para continuar...")
+    print("")
+sys.exit(8)
