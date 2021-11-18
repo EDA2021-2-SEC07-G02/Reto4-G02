@@ -32,29 +32,35 @@ El controlador se encarga de mediar entre la vista y el modelo.
 # Inicialización del Catálogo de libros
 
 
-def loadServices(analyzer, file):
-    """
-    Carga los datos de los archivos CSV en el modelo.
-    Se crea un arco entre cada par de estaciones que
-    pertenecen al mismo servicio y van en el mismo sentido.
+def initCatalog():
+    return model.initCatalog()
 
-    addRouteConnection crea conexiones entre diferentes rutas
-    servidas en una misma estación.
+
+def loadServices(analyzer):
     """
-    servicesfile = cf.data_dir + file
-    input_file = csv.DictReader(open(file, encoding="utf-8"),
+    aa
+    """
+
+    archivo_aeropuertos = cf.data_dir + "Skylines/airports_full.csv"
+    archivo_rutas = cf.data_dir + "Skylines/routes_full.csv"
+    archivo_ciudades = cf.data_dir + "Skylines/worldcities.csv"
+
+    input_file_aeropuerts = csv.DictReader(open(archivo_aeropuertos, encoding="utf-8"),
                                 delimiter=",")
-    lastservice = None
-    for service in input_file:
-        if lastservice is not None:
-            # sameservice = lastservice['ServiceNo'] == service['ServiceNo']
-            # samedirection = lastservice['Direction'] == service['Direction']
-            # samebusStop = lastservice['BusStopCode'] == service['BusStopCode']
-            # if sameservice and samedirection and not samebusStop:
-            #     model.addStopConnection(analyzer, lastservice, service)
-            # lastservice = service
-    model.addRouteConnections(analyzer)
+    for aeropuerto in input_file_aeropuerts:
+        model.addAeropuerto(analyzer,aeropuerto)
+    
+    input_file_rutas = csv.DictReader(open(archivo_rutas, encoding="utf-8"),
+                                delimiter=",")
+    for ruta in input_file_rutas:
+        model.addRuta(analyzer,ruta)
+
+    
+
     return analyzer
+
+def numero(catalog):
+    model.densidad(catalog)
 
 # Funciones para la carga de datos
 

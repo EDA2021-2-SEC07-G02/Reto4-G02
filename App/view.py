@@ -62,6 +62,14 @@ def printMenu():
     print("8- Salir")
 
 
+def initCatalog():
+    """
+
+    """
+    return controller.initCatalog()
+
+
+
 
 """
 Menu principal
@@ -72,10 +80,16 @@ while True:
     print("\n")
     tiempoInicial=process_time()
     if int(inputs[0]) == 0:
-        print("Cargando información de los archivos ....")
+        catalog=controller.initCatalog()
+
+        controller.loadServices(catalog)
+
+        
+        
+        
 
     elif int(inputs[0]) == 1:
-        print("Por implementar......")
+        controller.numero(catalog)
         pass
 
     elif int(inputs[0]) == 2:

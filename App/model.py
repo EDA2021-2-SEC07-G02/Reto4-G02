@@ -43,18 +43,71 @@ los mismos.
 
 # Construccion de modelos
 
-def newCatalog():
+def initCatalog():
     
     catalog={"AeropuertosRutasGraph": None,
-            "CiudadesTabla":None,
+            "Ciudades":None,
             "Aeropuertos":None}
     
     catalog["AeropuertosRutasGraph"]= gr.newGraph(datastructure='ADJ_LIST',
                                               directed=True,
-                                              size=93000, #Lineas csv 92606
-                                              comparefunction=compareRoutes)
+                                              size=93000,
+                                              comparefunction=compareString) # maté la comparación
+    
+    catalog["AeropuertosRutasDoblesGraph"]= gr.newGraph(datastructure='ADJ_LIST',
+                                              directed=False,
+                                              size=93000,
+                                              comparefunction=compareString)
+    return catalog
+    
+
 
 # Funciones para agregar informacion al catalogo
+
+def addAeropuerto(catalog,aeropuerto): 
+    pass
+
+def addRuta(catalog,ruta):    
+
+    arco = None
+    
+    if gr.containsVertex(catalog["AeropuertosRutasGraph"],ruta["Departure"]) and gr.containsVertex(catalog["AeropuertosRutasGraph"],ruta["Departure"]):
+        
+        arco = gr.getEdge(catalog["AeropuertosRutasGraph"],ruta["Departure"],ruta["Destination"])
+
+    if arco is not None:
+
+            if gr.containsVertex(catalog["AeropuertosRutasGraph"],ruta["Departure"]) and gr.containsVertex(catalog["AeropuertosRutasGraph"],ruta["Departure"]):
+
+                arco_contrario = gr.getEdge(catalog["AeropuertosRutasGraph"],ruta["Destination"],ruta["Departure"])
+
+            if arco_contrario is not None: # Caso que va por los dos lados, grafo no dirigido
+        
+                arco_no_dir = gr.getEdge(catalog["AeropuertosRutasDoblesGraph"],ruta["Destination"],ruta["Departure"])
+
+                if arco_no_dir is None: # si no está en el grafo no dirigido lo añado
+
+                    if not gr.containsVertex(catalog["AeropuertosRutasDoblesGraph"],ruta["Destination"]):
+                        gr.insertVertex(catalog["AeropuertosRutasDoblesGraph"], ruta["Destination"])
+                    if not gr.containsVertex(catalog["AeropuertosRutasDoblesGraph"],ruta["Departure"]):
+                        gr.insertVertex(catalog["AeropuertosRutasDoblesGraph"], ruta["Departure"])
+                    gr.addEdge(catalog["AeropuertosRutasDoblesGraph"],ruta["Destination"],ruta["Departure"],float(ruta["distance_km"]))
+
+                    arco_contrario = None # intento de eliminar el edge que se acaba de añaadir
+                    # TODO posibilidad de eliminar del otro lado el vértice
+            
+    else:
+        if not gr.containsVertex(catalog["AeropuertosRutasGraph"],ruta["Destination"]):
+            gr.insertVertex(catalog["AeropuertosRutasGraph"], ruta["Destination"])
+        if not gr.containsVertex(catalog["AeropuertosRutasGraph"],ruta["Departure"]):
+            gr.insertVertex(catalog["AeropuertosRutasGraph"], ruta["Departure"])
+        gr.addEdge(catalog["AeropuertosRutasGraph"],ruta["Destination"],ruta["Departure"],float(ruta["distance_km"]))
+    
+
+def densidad(catalog):
+    print(gr.numVertices(catalog['AeropuertosRutasGraph']))
+    print(gr.numVertices(catalog['AeropuertosRutasDoblesGraph']))
+
 
 def addRouteConnection(catalog, route):
     """
@@ -72,16 +125,21 @@ def addRouteConnection(catalog, route):
 
 # Funciones de consulta
 
-# Funciones utilizadas para comparar elementos dentro de una lista
+# Funciones utilizadas para comparar elementos
 
-# def compareRoutes(ruta1,ruta2):
-#     stopcode = keyvaluestop['key']
-#     if (stop == stopcode):
-#         return 0
-#     elif (stop > stopcode):
-#         return 1
-#     else:
-#         return -1
+def compareString(stop, keyvaluestop):
+    """
+    Compara dos estaciones
+    """
+    stopcode = keyvaluestop['key']
+    if (stop == stopcode):
+        return 0
+    elif (stop > stopcode):
+        return 1
+    else:
+        return -1
+
+
 
 # Funciones de ordenamiento
 
