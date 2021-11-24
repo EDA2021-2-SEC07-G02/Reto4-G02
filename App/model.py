@@ -177,27 +177,30 @@ def compareString(stop, keyvaluestop):
 # ==============================
 
 
-def connectedComponents(analyzer):
+def connectedComponents(analyzer,nombreGrafo):
     """
     Calcula los componentes conectados del grafo
     Se utiliza el algoritmo de Kosaraju
     """
-    analyzer['components'] = scc.KosarajuSCC(analyzer['connections'])
-    return scc.connectedComponents(analyzer['components'])
+    analyzer[nombreGrafo] = scc.KosarajuSCC(analyzer[nombreGrafo])
+    return scc.connectedComponents(analyzer[nombreGrafo])
 
 
-def totalStops(analyzer):
+def totalAeropuertos(analyzer,nombreGrafo):
     """
     Retorna el total de estaciones (vertices) del grafo
     """
-    return gr.numVertices(analyzer['connections'])
+    return gr.numVertices(analyzer[nombreGrafo])
 
 
-def totalConnections(analyzer):
+def totalRutas(analyzer,nombreGrafo):
     """
     Retorna el total arcos del grafo
     """
-    return gr.numEdges(analyzer['connections'])
+    return gr.numEdges(analyzer[nombreGrafo])
 
-
+def infoGrafo(analyzer,nombreGrafo):
+    vertices=totalAeropuertos(analyzer,nombreGrafo)
+    arcos=totalRutas(analyzer,nombreGrafo)
+    return vertices,arcos
 

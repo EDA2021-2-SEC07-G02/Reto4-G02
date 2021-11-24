@@ -71,11 +71,33 @@ def initCatalog():
 
 def infoCargaCatalogo():
     print("\n"+"*"*50)
+
     print("*"*10+"Información mapas"+"*"*10)
     print("Tamaño de mapa CiudadesTabla: ",catalog["CiudadesTabla"]["size"])
-    print("Tamaño de mapa CiudadesTabla: ",catalog["AeropuertosTabla"]["size"])
+    print("Tamaño de mapa AeropuertosTabla: ",catalog["AeropuertosTabla"]["size"])
+
     print("*"*10+"Información grafos:"+"*"*10)
-    print("--- POR IMPLEMENTAR")
+    #print("--- POR IMPLEMENTAR")
+    try:
+        infoAeropuertosRutasGraph=controller.infoGrafo(catalog,"AeropuertosRutasGraph")
+        print("Grafo AeropuertosRutasGraph" 
+            +"Vértices: " +str(infoAeropuertosRutasGraph[0]),
+            + "Arcos: "+infoAeropuertosRutasGraph[1])
+    except TypeError:
+        print("Error al obtener los vértices y/o arcos del grafo: AeropuertosRutasGraph ")
+
+    
+    try:
+        infoAeropuertosRutasDoblesGraph=controller.infoGrafo(catalog,"AeropuertosRutasDoblesGraph")
+        print("Grafo AeropuertosRutasDoblesGraph" 
+            +"Vértices: " +str(infoAeropuertosRutasDoblesGraph[0]),
+            + "Arcos: "+infoAeropuertosRutasDoblesGraph[1])
+    
+    except TypeError:
+        print("Error al obtener los vértices y/o arcos del grafo: AeropuertosRutasDoblesGraph")
+    
+    #print(catalog["AeropuertosRutasDoblesGraph"])
+    
     print("-"*40)
     print("\n"+"*"*10+"FIN Información mapas y grafos"+"*"*10)
     print("*"*50)

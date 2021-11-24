@@ -70,6 +70,9 @@ def loadServices(analyzer):
 def numero(catalog):
     model.densidad(catalog)
 
+def infoGrafo(catalog,nombreGrafo):
+    model.infoGrafo(catalog,nombreGrafo)
+
 # Funciones para la carga de datos
 
 # Funciones de ordenamiento
