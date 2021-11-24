@@ -69,7 +69,16 @@ def initCatalog():
     return controller.initCatalog()
 
 
-
+def infoCargaCatalogo():
+    print("\n"+"*"*50)
+    print("*"*10+"Información mapas"+"*"*10)
+    print("Tamaño de mapa CiudadesTabla: ",catalog["CiudadesTabla"]["size"])
+    print("Tamaño de mapa CiudadesTabla: ",catalog["AeropuertosTabla"]["size"])
+    print("*"*10+"Información grafos:"+"*"*10)
+    print("--- POR IMPLEMENTAR")
+    print("-"*40)
+    print("\n"+"*"*10+"FIN Información mapas y grafos"+"*"*10)
+    print("*"*50)
 
 """
 Menu principal
@@ -83,10 +92,8 @@ while True:
         catalog=controller.initCatalog()
 
         controller.loadServices(catalog)
+        infoCargaCatalogo()
 
-        
-        
-        
 
     elif int(inputs[0]) == 1:
         controller.numero(catalog)

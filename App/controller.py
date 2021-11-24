@@ -45,10 +45,18 @@ def loadServices(analyzer):
     archivo_rutas = cf.data_dir + "Skylines/routes_full.csv"
     archivo_ciudades = cf.data_dir + "Skylines/worldcities.csv"
 
+    ###tablas de simbolos
     input_file_aeropuerts = csv.DictReader(open(archivo_aeropuertos, encoding="utf-8"),
+                                delimiter=",")
+    input_file_ciudades= csv.DictReader(open(archivo_ciudades, encoding="utf-8"),
                                 delimiter=",")
     for aeropuerto in input_file_aeropuerts:
         model.addAeropuerto(analyzer,aeropuerto)
+    
+    for ciudad in input_file_ciudades:
+        model.addCity(analyzer,ciudad)
+    
+    ### grafos
     
     input_file_rutas = csv.DictReader(open(archivo_rutas, encoding="utf-8"),
                                 delimiter=",")

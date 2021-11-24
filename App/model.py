@@ -47,7 +47,9 @@ def initCatalog():
     
     catalog={"AeropuertosRutasGraph": None,
             "Ciudades":None,
-            "Aeropuertos":None}
+            "Aeropuertos":None,
+            "CiudadesTabla":None,
+            "AeropuertosTabla":None}
     
     catalog["AeropuertosRutasGraph"]= gr.newGraph(datastructure='ADJ_LIST',
                                               directed=True,
@@ -58,14 +60,38 @@ def initCatalog():
                                               directed=False,
                                               size=93000,
                                               comparefunction=compareString)
+    
+    catalog["CiudadesTabla"]=mp.newMap(numelements=37831, 
+                                    maptype="CHAINING",
+                                    loadfactor=4.0)
+    
+    #9075 aeropuertos, 37411 ciudades únicas
+    catalog["AeropuertosTabla"]= mp.newMap(numelements=10061,
+                                    maptype="CHAINING",
+                                    loadfactor=4.0)                                      
+
     return catalog
     
 
 
 # Funciones para agregar informacion al catalogo
 
-def addAeropuerto(catalog,aeropuerto): 
-    pass
+def addCity(catalog,ciudad):
+    cityAscii=ciudad["city_ascii"]
+    #adminName=ciudad["city_ascii"] ## La ciudad de springfield se repite 17 veces, pero es una ciudad distinta
+    keyCity=cityAscii#+"-"+adminName #definir como será la key
+    existCity=mp.contains(catalog["CiudadesTabla"],keyCity)
+    if existCity:
+        lt.addLast(mp.get(catalog["CiudadesTabla"],keyCity)["value"],ciudad)
+    else:
+        listCitiesId=lt.newList(datastructure="ARRAY_LIST")
+        lt.addLast(listCitiesId,ciudad)
+        mp.put(catalog["CiudadesTabla"],cityAscii,listCitiesId) 
+
+def addAeropuerto(catalog,aeropuerto):
+    #no hay aeropuertos repetidos
+    IATA=aeropuerto["IATA"]
+    mp.put(catalog["AeropuertosTabla"],IATA,aeropuerto) 
 
 def addRuta(catalog,ruta):    
 
