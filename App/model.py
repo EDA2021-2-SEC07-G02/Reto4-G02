@@ -49,13 +49,17 @@ def initCatalog():
             "Ciudades":None,
             "Aeropuertos":None,
             "CiudadesTabla":None,
-            "AeropuertosTabla":None}
+            "AeropuertosTabla":None,
+            "TablaRutasProv":None}
     
+    #hay que ajustar el size de ambos grafos
+    #grado dirigido
     catalog["AeropuertosRutasGraph"]= gr.newGraph(datastructure='ADJ_LIST',
                                               directed=True,
                                               size=93000,
                                               comparefunction=compareString) # maté la comparación
     
+    #grafo no dirigido
     catalog["AeropuertosRutasDoblesGraph"]= gr.newGraph(datastructure='ADJ_LIST',
                                               directed=False,
                                               size=93000,
@@ -116,19 +120,17 @@ def addRutasAereas(catalog, route):
 def cmpDestination(aeropuerto1,aeropuerto2):
     return aeropuerto1["Destination"]== aeropuerto2["Destination"]
 
-#2. Se recorren todas las rutas de salida, se va a ir adicionando info al grafo 
-#dependiendo de condiciones
+#2. Se recorren todas las rutas de salida, se va a ir adicionando info al grafo dirigido o no dirigido dependiendo
 def addRuta(catalog):
     keySetRutas=mp.keySet(catalog["TablaRutasProv"])
     print("Total rutas de salida: ",keySetRutas["size"])
     for aeropuertoSalida in lt.iterator(keySetRutas):
-        #print(aeropuertoSalida)
         aeropuertoSalidaRutas=mp.get(catalog["TablaRutasProv"],aeropuertoSalida)["value"]["elements"]
         #Se adiciona el aeropuerto como vértice a ambos grafos
         addAeropuertoGraf(catalog,aeropuertoSalida,"AeropuertosRutasGraph")
         addAeropuertoGraf(catalog,aeropuertoSalida,"AeropuertosRutasDoblesGraph")
+        
         for aeropuertoLlegadaInfo in aeropuertoSalidaRutas:
-            #print("AEROPUERTO LLEGADA;" ,aeropuertoLlegadaInfo)
             peso=float(aeropuertoLlegadaInfo["distance_km"])
             aeropuertoLlegada=aeropuertoLlegadaInfo["Destination"]
 
@@ -139,12 +141,14 @@ def addRuta(catalog):
                 #se comprueba si la ruta solo funciona en una dirección, si es verdad se agrega al grafo en solo una dirección
                 
                 if existeRetorno:
-                    addAeropuertoGraf(catalog,aeropuertoLlegada,"AeropuertosRutasDoblesGraph") #se adiciona al graf de ambas rutas
+                    addAeropuertoGraf(catalog,aeropuertoLlegada,"AeropuertosRutasDoblesGraph") #se adiciona al graf no dirigido
                     #print(aeropuertoSalida,aeropuertoLlegada,peso)
-                    if gr.containsVertex(catalog["AeropuertosRutasDoblesGraph"],aeropuertoLlegada) and gr.containsVertex(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida):
+                    #ambosVertice
+                    #if gr.containsVertex(catalog["AeropuertosRutasDoblesGraph"],aeropuertoLlegada) and gr.containsVertex(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida):
+                    if gr.getEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada) is None:
                         gr.addEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada,peso)
                 else:
-                    addAeropuertoGraf(catalog,aeropuertoLlegada,"AeropuertosRutasGraph") #se adiciona al graf de ambas rutas
+                    addAeropuertoGraf(catalog,aeropuertoLlegada,"AeropuertosRutasGraph") #se adiciona al graf dirigido
                     gr.addEdge(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada,peso)
 
 def addAeropuertoGraf(catalog, vertice,nombreGrafo):
@@ -160,7 +164,7 @@ def addAeropuertoGraf(catalog, vertice,nombreGrafo):
 
 def existeRutaDeRetorno(aeropuerto,listaRutas):
     """
-    Si el retorno es distinto 0 es que existe la ruta
+    Si el retorno es distinto 0 es que existe la ruta en dos direcciones
     """
     existe=False
     for ruta in lt.iterator(listaRutas):
@@ -171,7 +175,7 @@ def existeRutaDeRetorno(aeropuerto,listaRutas):
 
 
 
-def addRuta0(catalog,ruta):    
+def addRutaOriginal(catalog,ruta):    
 
     arco = None
     

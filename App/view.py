@@ -79,25 +79,21 @@ def infoCargaCatalogo():
     print("*"*10+"Información grafos:"+"*"*10)
     #print("--- POR IMPLEMENTAR")
     try:
-        infoAeropuertosRutasGraph=controller.infoGrafo(catalog,"AeropuertosRutasGraph")
-        print("Grafo AeropuertosRutasGraph" 
-            +"Vértices: " +str(infoAeropuertosRutasGraph[0]),
-            + "Arcos: "+infoAeropuertosRutasGraph[1])
-    except TypeError:
+        vertices=catalog["AeropuertosRutasGraph"]['vertices']["size"]
+        arcos=catalog["AeropuertosRutasGraph"]['edges']
+        print("Grafo AeropuertosRutasGraph (Dirigido)"+" |Vértices: " +str(vertices)+ " - Arcos: "+ str(arcos))
+    
+    except:
         print("Error al obtener los vértices y/o arcos del grafo: AeropuertosRutasGraph ")
 
     
     try:
-        print(catalog["AeropuertosRutasGraph"].keys())
-        print(catalog["AeropuertosRutasGraph"]["size"])
-        print(catalog["AeropuertosRutasGraph"]['vertices']["size"])
-        infoAeropuertosRutasDoblesGraph=controller.infoGrafo(catalog,"AeropuertosRutasDoblesGraph")
-        print("Grafo AeropuertosRutasDoblesGraph" 
-            +"Vértices: " +str(infoAeropuertosRutasDoblesGraph[0]),
-            + "Arcos: "+infoAeropuertosRutasDoblesGraph[1])
-        
+        #print(catalog["AeropuertosRutasDoblesGraph"].keys())
+        vertices1=catalog["AeropuertosRutasDoblesGraph"]['vertices']["size"]
+        arcos1=catalog["AeropuertosRutasDoblesGraph"]['edges']
+        print("Grafo AeropuertosRutasDoblesGraph (No dirigido)"+" |Vértices: " +str(vertices1)+ " - Arcos: "+ str(arcos1))
     
-    except TypeError:
+    except:
         print("Error al obtener los vértices y/o arcos del grafo: AeropuertosRutasDoblesGraph")
     
     #print(catalog["AeropuertosRutasDoblesGraph"])
