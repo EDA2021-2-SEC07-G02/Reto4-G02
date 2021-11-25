@@ -50,6 +50,7 @@ def loadServices(analyzer):
                                 delimiter=",")
     input_file_ciudades= csv.DictReader(open(archivo_ciudades, encoding="utf-8"),
                                 delimiter=",")
+    print(type(input_file_ciudades))
     for aeropuerto in input_file_aeropuerts:
         model.addAeropuerto(analyzer,aeropuerto)
     
@@ -63,11 +64,11 @@ def loadServices(analyzer):
     for ruta in input_file_rutas:
         model.addRutasAereas(analyzer,ruta)
     
-    model.addRuta(analyzer)
+    infoView=model.addRuta(analyzer) #primeros aeropuertos cargados
 
-    
+    ultimaCiudad=ciudad
 
-    return analyzer
+    return analyzer,infoView,ultimaCiudad
 
 def numero(catalog):
     model.densidad(catalog)

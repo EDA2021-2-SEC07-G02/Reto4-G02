@@ -113,8 +113,13 @@ while True:
     if int(inputs[0]) == 0:
         catalog=controller.initCatalog()
 
-        controller.loadServices(catalog)
+        info=controller.loadServices(catalog)
         infoCargaCatalogo()
+        primerosAeropuertosGrafos=info[1]
+        ultimaCiudadCargada=info[2]
+        #el primer aeropuerto es cargado a ambos grafos debido a la implementación que hicimos del model
+        print("Primer aeropuerto cargado en ambos grafos: \n",primerosAeropuertosGrafos)
+        print("\nÚltima ciudad cargada a la tabla de simbolos: \n",ultimaCiudadCargada)
 
 
     elif int(inputs[0]) == 1:

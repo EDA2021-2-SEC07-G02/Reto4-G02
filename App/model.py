@@ -124,6 +124,7 @@ def cmpDestination(aeropuerto1,aeropuerto2):
 #2. Se recorren todas las rutas de salida, se va a ir adicionando info al grafo dirigido o no dirigido dependiendo
 def addRuta(catalog):
     keySetRutas=mp.keySet(catalog["TablaRutasProv"])
+    Aeropuerto1=mp.get(catalog["AeropuertosTabla"],lt.getElement(keySetRutas,1))
     print("Total rutas de salida: ",keySetRutas["size"])
     for aeropuertoSalida in lt.iterator(keySetRutas):
         aeropuertoSalidaRutas=mp.get(catalog["TablaRutasProv"],aeropuertoSalida)["value"]["elements"]
@@ -137,20 +138,19 @@ def addRuta(catalog):
 
             if mp.contains(catalog["TablaRutasProv"],aeropuertoLlegada):
                 llegada=mp.get(catalog["TablaRutasProv"],aeropuertoLlegada)["value"] 
+                gr.addEdge(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada,peso) #se adiciona al graf dirigido
                 existeRetorno=existeRutaDeRetorno(aeropuertoSalida,llegada)
 
-                #se comprueba si la ruta solo funciona en una dirección, si es verdad se agrega al grafo en solo una dirección
-                
                 if existeRetorno:
                     addAeropuertoGraf(catalog,aeropuertoLlegada,"AeropuertosRutasDoblesGraph") #se adiciona al graf no dirigido
                     #print(aeropuertoSalida,aeropuertoLlegada,peso)
-                    #ambosVertice
-                    #if gr.containsVertex(catalog["AeropuertosRutasDoblesGraph"],aeropuertoLlegada) and gr.containsVertex(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida):
                     if gr.getEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada) is None:
                         gr.addEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada,peso)
-                else:
-                    #addAeropuertoGraf(catalog,aeropuertoLlegada,"AeropuertosRutasGraph") #se adiciona al graf dirigido
-                    gr.addEdge(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada,peso)
+
+                #else:
+                    #addAeropuertoGraf(catalog,aeropuertoLlegada,"AeropuertosRutasGraph")
+    return Aeropuerto1
+                    
 
 def addAeropuertoGraf(catalog, vertice,nombreGrafo):
     """
@@ -223,6 +223,9 @@ def densidad(catalog):
 # Funciones para creacion de datos
 
 # Funciones de consulta
+
+def ultimaCiudadCargada(file):
+    pass
 
 # Funciones utilizadas para comparar elementos
 
