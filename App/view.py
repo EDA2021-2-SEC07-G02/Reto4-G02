@@ -73,7 +73,7 @@ def infoCargaCatalogo():
     print("\n"+"*"*50)
 
     print("*"*10+"Información mapas"+"*"*10)
-    print("Tamaño de mapa CiudadesTabla: ",catalog["CiudadesTabla"]["size"])
+    print("Total de ciudades con nombre único: ",catalog["CiudadesTabla"]["size"])
     print("Tamaño de mapa AeropuertosTabla: ",catalog["AeropuertosTabla"]["size"])
 
     print("*"*10+"Información grafos:"+"*"*10)
@@ -81,7 +81,7 @@ def infoCargaCatalogo():
     try:
         vertices=catalog["AeropuertosRutasGraph"]['vertices']["size"]
         arcos=catalog["AeropuertosRutasGraph"]['edges']
-        print("Grafo AeropuertosRutasGraph (Dirigido)"+" |Vértices: " +str(vertices)+ " - Arcos: "+ str(arcos))
+        print("Grafo AeropuertosRutasGraph (Dirigido)"+" |Aeropuertos: " +str(vertices)+ " - total de rutas aéreas: "+ str(arcos))
     
     except:
         print("Error al obtener los vértices y/o arcos del grafo: AeropuertosRutasGraph ")
@@ -91,7 +91,7 @@ def infoCargaCatalogo():
         #print(catalog["AeropuertosRutasDoblesGraph"].keys())
         vertices1=catalog["AeropuertosRutasDoblesGraph"]['vertices']["size"]
         arcos1=catalog["AeropuertosRutasDoblesGraph"]['edges']
-        print("Grafo AeropuertosRutasDoblesGraph (No dirigido)"+" |Vértices: " +str(vertices1)+ " - Arcos: "+ str(arcos1))
+        print("Grafo AeropuertosRutasDoblesGraph (No dirigido)"+" |Aeropuertos: " +str(vertices1)+ " - total de rutas aéreas: "+ str(arcos1))
     
     except:
         print("Error al obtener los vértices y/o arcos del grafo: AeropuertosRutasDoblesGraph")

@@ -99,7 +99,8 @@ def addCity(catalog,ciudad):
 def addAeropuerto(catalog,aeropuerto):
     #no hay aeropuertos repetidos
     IATA=aeropuerto["IATA"]
-    mp.put(catalog["AeropuertosTabla"],IATA,aeropuerto) 
+    mp.put(catalog["AeropuertosTabla"],IATA,aeropuerto)
+    addAeropuertoGraf(catalog,IATA,"AeropuertosRutasGraph") 
 
 ###################
 # Modificación en grafos
@@ -148,7 +149,7 @@ def addRuta(catalog):
                     if gr.getEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada) is None:
                         gr.addEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada,peso)
                 else:
-                    addAeropuertoGraf(catalog,aeropuertoLlegada,"AeropuertosRutasGraph") #se adiciona al graf dirigido
+                    #addAeropuertoGraf(catalog,aeropuertoLlegada,"AeropuertosRutasGraph") #se adiciona al graf dirigido
                     gr.addEdge(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada,peso)
 
 def addAeropuertoGraf(catalog, vertice,nombreGrafo):
