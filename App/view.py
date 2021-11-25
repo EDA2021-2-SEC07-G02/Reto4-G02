@@ -88,10 +88,14 @@ def infoCargaCatalogo():
 
     
     try:
+        print(catalog["AeropuertosRutasGraph"].keys())
+        print(catalog["AeropuertosRutasGraph"]["size"])
+        print(catalog["AeropuertosRutasGraph"]['vertices']["size"])
         infoAeropuertosRutasDoblesGraph=controller.infoGrafo(catalog,"AeropuertosRutasDoblesGraph")
         print("Grafo AeropuertosRutasDoblesGraph" 
             +"Vértices: " +str(infoAeropuertosRutasDoblesGraph[0]),
             + "Arcos: "+infoAeropuertosRutasDoblesGraph[1])
+        
     
     except TypeError:
         print("Error al obtener los vértices y/o arcos del grafo: AeropuertosRutasDoblesGraph")

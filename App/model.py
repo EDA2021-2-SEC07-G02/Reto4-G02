@@ -68,7 +68,11 @@ def initCatalog():
     #9075 aeropuertos, 37411 ciudades únicas
     catalog["AeropuertosTabla"]= mp.newMap(numelements=10061,
                                     maptype="CHAINING",
-                                    loadfactor=4.0)                                      
+                                    loadfactor=4.0)
+
+    catalog["TablaRutasProv"]= mp.newMap(numelements=95000,
+                                    maptype="CHAINING",
+                                    loadfactor=4.0)                                  
 
     return catalog
     
@@ -93,7 +97,81 @@ def addAeropuerto(catalog,aeropuerto):
     IATA=aeropuerto["IATA"]
     mp.put(catalog["AeropuertosTabla"],IATA,aeropuerto) 
 
-def addRuta(catalog,ruta):    
+###################
+# Modificación en grafos
+###################
+
+#1. Se crea una tabla de simbolos con las rutas
+# con el fin de conocer si la ruta debe agregarse al grafo bireccional o unidireccional
+def addRutasAereas(catalog, route):
+    aeropuertoSalida=route["Departure"]
+    existSalida=mp.contains(catalog["TablaRutasProv"],aeropuertoSalida)
+    if existSalida:
+        lt.addLast(mp.get(catalog["TablaRutasProv"],aeropuertoSalida)["value"],route)
+    else:
+        listAeropuertosLlegada=lt.newList(datastructure="ARRAY_LIST",cmpfunction=cmpDestination)
+        lt.addLast(listAeropuertosLlegada,route)
+        mp.put(catalog["TablaRutasProv"],aeropuertoSalida,listAeropuertosLlegada)
+
+def cmpDestination(aeropuerto1,aeropuerto2):
+    return aeropuerto1["Destination"]== aeropuerto2["Destination"]
+
+#2. Se recorren todas las rutas de salida, se va a ir adicionando info al grafo 
+#dependiendo de condiciones
+def addRuta(catalog):
+    keySetRutas=mp.keySet(catalog["TablaRutasProv"])
+    print("Total rutas de salida: ",keySetRutas["size"])
+    for aeropuertoSalida in lt.iterator(keySetRutas):
+        #print(aeropuertoSalida)
+        aeropuertoSalidaRutas=mp.get(catalog["TablaRutasProv"],aeropuertoSalida)["value"]["elements"]
+        #Se adiciona el aeropuerto como vértice a ambos grafos
+        addAeropuertoGraf(catalog,aeropuertoSalida,"AeropuertosRutasGraph")
+        addAeropuertoGraf(catalog,aeropuertoSalida,"AeropuertosRutasDoblesGraph")
+        for aeropuertoLlegadaInfo in aeropuertoSalidaRutas:
+            #print("AEROPUERTO LLEGADA;" ,aeropuertoLlegadaInfo)
+            peso=float(aeropuertoLlegadaInfo["distance_km"])
+            aeropuertoLlegada=aeropuertoLlegadaInfo["Destination"]
+
+            if mp.contains(catalog["TablaRutasProv"],aeropuertoLlegada):
+                llegada=mp.get(catalog["TablaRutasProv"],aeropuertoLlegada)["value"] 
+                existeRetorno=existeRutaDeRetorno(aeropuertoSalida,llegada)
+
+                #se comprueba si la ruta solo funciona en una dirección, si es verdad se agrega al grafo en solo una dirección
+                
+                if existeRetorno:
+                    addAeropuertoGraf(catalog,aeropuertoLlegada,"AeropuertosRutasDoblesGraph") #se adiciona al graf de ambas rutas
+                    #print(aeropuertoSalida,aeropuertoLlegada,peso)
+                    if gr.containsVertex(catalog["AeropuertosRutasDoblesGraph"],aeropuertoLlegada) and gr.containsVertex(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida):
+                        gr.addEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada,peso)
+                else:
+                    addAeropuertoGraf(catalog,aeropuertoLlegada,"AeropuertosRutasGraph") #se adiciona al graf de ambas rutas
+                    gr.addEdge(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada,peso)
+
+def addAeropuertoGraf(catalog, vertice,nombreGrafo):
+    """
+    Adiciona un aeropuerto como un vertice del grafo
+    """
+    try:
+        if not gr.containsVertex(catalog[nombreGrafo], vertice):
+            gr.insertVertex(catalog[nombreGrafo], vertice)
+        return catalog
+    except Exception as exp:
+        error.reraise(exp, 'model:addRoute')
+
+def existeRutaDeRetorno(aeropuerto,listaRutas):
+    """
+    Si el retorno es distinto 0 es que existe la ruta
+    """
+    existe=False
+    for ruta in lt.iterator(listaRutas):
+        if ruta["Destination"]==aeropuerto:
+            existe=True
+            break
+    return existe#lt.isPresent(listaRutas,aeropuerto)
+
+
+
+def addRuta0(catalog,ruta):    
 
     arco = None
     
@@ -135,16 +213,6 @@ def densidad(catalog):
     print(gr.numVertices(catalog['AeropuertosRutasDoblesGraph']))
 
 
-def addRouteConnection(catalog, route):
-    """
-    Adiciona una estación como un vertice del grafo
-    """
-    try:
-        if not gr.containsVertex(catalog['AeropuertosRutasGraph'], route):
-            gr.insertVertex(catalog['AeropuertosRutasGraph'], route)
-        return catalog
-    except Exception as exp:
-        error.reraise(exp, 'model:addRoute')
 
 
 # Funciones para creacion de datos

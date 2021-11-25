@@ -61,7 +61,9 @@ def loadServices(analyzer):
     input_file_rutas = csv.DictReader(open(archivo_rutas, encoding="utf-8"),
                                 delimiter=",")
     for ruta in input_file_rutas:
-        model.addRuta(analyzer,ruta)
+        model.addRutasAereas(analyzer,ruta)
+    
+    model.addRuta(analyzer)
 
     
 
