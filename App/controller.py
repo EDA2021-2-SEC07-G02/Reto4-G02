@@ -76,6 +76,11 @@ def numero(catalog):
 def infoGrafo(catalog,nombreGrafo):
     model.infoGrafo(catalog,nombreGrafo)
 
+def buscarCiudad(catalog,ciudad):
+    return model.buscarCiudad(catalog,ciudad)
+
+def coordenadasCiudad(catalog,ciudad,pos=1):
+    return model.coordenadasCiudad(catalog,ciudad,pos)
 # Funciones para la carga de datos
 
 # Funciones de ordenamiento

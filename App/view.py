@@ -25,6 +25,8 @@ import sys
 import controller
 from DISClib.ADT import list as lt
 from time import process_time
+import prettytable
+from prettytable import PrettyTable
 assert cf
 
 
@@ -67,6 +69,57 @@ def initCatalog():
 
     """
     return controller.initCatalog()
+
+def printPrettyTable(lista, keys, field_names, max_width, sample=3, ultimas=False):
+    artPretty=PrettyTable(hrules=prettytable.ALL)
+    artPretty.field_names=field_names
+    artPretty._max_width = max_width
+
+    cont=1
+
+    for elemento in lt.iterator(lista):
+        valoresFila=[]
+        for key in keys:
+            valoresFila.append(elemento[key])
+        artPretty.add_row(tuple(valoresFila))
+        if cont>=sample:
+            break
+        cont+=1
+    
+    if ultimas:
+        ultimo_index=lt.size(lista) # aRRAY LIST
+        cont2=1
+        while cont2<=sample:
+            indice=ultimo_index-sample+cont2
+            if indice>cont and indice>=0 and lt.size(lista)>=indice:
+                elemento=lt.getElement(lista,indice)
+                valoresFila=[]
+                for key in keys:
+                    valoresFila.append(elemento[key])
+                artPretty.add_row(valoresFila)
+            cont2+=1
+    
+    print(artPretty)
+
+def printEscogerCiudad(respuesta):
+    ciudadRepetida=respuesta[0]
+    listaCiudades=respuesta[1]
+    sizeCiudades=listaCiudades["size"]
+
+    if ciudadRepetida==0:
+        print("El nombre de la ciudad buscada no existe")
+    elif ciudadRepetida==1:
+        print("La ciudad existe. La información de la ciudad es la siguiente: ")
+    elif ciudadRepetida==2:
+        print("Hay ",sizeCiudades," ciudades con este nombre.")
+        print("La información de las ciudades es la siguiente: ")
+        #print("Por favor seleccione la ciudad que desea: ")
+
+    keys=["opcion","city","capital","lat","lng", "country"]
+    fieldNames=["opcion","city","capital","lat","lng", "country"]
+    maxWidth = {"opcion":3,"city": 20,"capital":20,"lat":10,"lng":10,"country":15}
+    printPrettyTable(listaCiudades,keys,fieldNames,maxWidth,sample=sizeCiudades,ultimas=False)
+
 
 
 def infoCargaCatalogo():
@@ -131,8 +184,32 @@ while True:
         pass
 
     elif int(inputs[0]) == 3:
-        print("Por implementar......")
-        pass
+
+        ciudadOr=input("Ingrese el nombre de la ciudad de origen:  ") #Springfield
+        resultadoCiudad=controller.buscarCiudad(catalog,ciudadOr)
+        printEscogerCiudad(resultadoCiudad)
+        ###Limpiar código xddd
+        if resultadoCiudad[0]>0:
+            if lt.size(resultadoCiudad[1])>1:
+                posicion=int(input("Escoga que ciudad de origen desea elegir. Ingrese el número de la ciudad de la columna opción: "))
+                ciudadOrigen=controller.coordenadasCiudad(catalog,ciudadOr,posicion)
+               
+            else:
+                ciudadOrigen=controller.coordenadasCiudad(catalog,ciudadOr,pos=1)
+            
+            print("INFO CIUDAD ORIGEN: \n",ciudadOrigen)
+
+            ciudadDes=input("Ingrese el nombre de la ciudad de destino:  ")
+            resultadoCiudadDes=controller.buscarCiudad(catalog,ciudadDes)
+            printEscogerCiudad(resultadoCiudadDes)
+            if resultadoCiudadDes[0]>0:
+                if lt.size(resultadoCiudadDes[1])>1:
+                    posicion=int(input("Escoga que ciudad de destino desea elegir. Ingrese el número de la ciudad de la columna opción: "))
+                    ciudadDestino=controller.coordenadasCiudad(catalog,ciudadDes,posicion)
+                    
+                else:
+                    ciudadDestino=controller.coordenadasCiudad(catalog,ciudadDes,pos=1)
+                print("INFO CIUDAD DESTINO: \n",ciudadDestino)
 
     elif int(inputs[0]) == 4:
         print("Por implementar......")

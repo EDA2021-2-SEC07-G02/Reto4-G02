@@ -68,7 +68,7 @@ def initCatalog():
     catalog["CiudadesTabla"]=mp.newMap(numelements=37831, 
                                     maptype="CHAINING",
                                     loadfactor=4.0)
-    
+    #gr.adjacentEdges
     #9075 aeropuertos, 37411 ciudades únicas
     catalog["AeropuertosTabla"]= mp.newMap(numelements=10061,
                                     maptype="CHAINING",
@@ -175,6 +175,7 @@ def existeRutaDeRetorno(aeropuerto,listaRutas):
     return existe#lt.isPresent(listaRutas,aeropuerto)
 
 
+######## decidir que hacer con este código
 
 def addRutaOriginal(catalog,ruta):    
 
@@ -218,6 +219,61 @@ def densidad(catalog):
     print(gr.numVertices(catalog['AeropuertosRutasDoblesGraph']))
 
 
+####### avance del requerimiento 3
+
+def buscarCiudad(catalog,ciudad):
+    """
+    Se buscará una ciudad en el catálogo para mostrarle las opciones
+    disponibles al usuario. 
+
+    Los retornos de esta función serán:
+        ciudadRepetida: Representa si la ciudad es homónima o no
+        ciudadLista: Una lista con la/s ciudade/s con este nombre
+
+    El retorno de ciudadRepetida será:
+        0: La ciudad no existe
+        1: La ciudad existe y no es homónimas
+        2: La ciudad es homónima / está repetida
+    """
+    ciudadRepetida=None
+    ciudadLista=None
+    if mp.contains(catalog["CiudadesTabla"],ciudad):
+        ciudadLista=mp.get(catalog["CiudadesTabla"],ciudad)["value"] #retorna una lista
+        if lt.size(ciudadLista)>1:
+            ciudadRepetida=2 #El nombre de la ciudad se repite
+        else:
+            ciudadRepetida=1 #La ciudad existe pero no está repetida
+
+    else:
+        ciudadRepetida=0 #La ciudad no existe
+        ciudadLista=lt.newList("ARRAY_LIST")
+        elemento={"city": "La ciudad no existe",
+                "city_ascii":None,
+                "lat":None,
+                "lng":None,
+                "country":None,
+                "admin_name":None,
+                "capital":None}
+        lt.addLast(ciudadLista,elemento)
+    
+    pos=1
+    for ciudadHom in lt.iterator(ciudadLista): #Se agrega una llave para que el usuario pueda escoger la ciudad que desea
+        #la cantidad de ciudades máxima que se repiten son 17, por lo tanto esta operación es O(17) = O(K)
+        ciudadHom["opcion"]=pos
+        pos+=1
+    return ciudadRepetida,ciudadLista
+
+def coordenadasCiudad(catalog,ciudad,pos=1):
+    """
+    Esta función retornará la coordenada de la ciudad escogida
+    por el usuario
+    """
+    ciudadLista=mp.get(catalog["CiudadesTabla"],ciudad)["value"]
+    #print(ciudadLista)
+    ciudadEscogida=lt.getElement(ciudadLista,pos)
+    coordenadaLat=ciudadEscogida["lat"]
+    coordenadaLng=ciudadEscogida["lng"]
+    return ciudadEscogida,coordenadaLat,coordenadaLng
 
 
 # Funciones para creacion de datos
