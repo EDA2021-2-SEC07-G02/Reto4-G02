@@ -35,10 +35,7 @@ from DISClib.Algorithms.Graphs import dijsktra as djk
 from DISClib.Utils import error as error
 assert cf
 
-"""
-Se define la estructura de un catálogo de videos. El catálogo tendrá dos listas, una para los videos, otra para las categorias de
-los mismos.
-"""
+
 
 # Construccion de modelos
 
@@ -81,7 +78,9 @@ def initCatalog():
     
 
 
-# Funciones para agregar informacion al catalogo
+# -----------------------------------------------------------
+# AGREGAR INFORMACIÓN AL CATÁLOGO
+# -----------------------------------------------------------
 
 def addCity(catalog,ciudad):
     """
@@ -130,10 +129,10 @@ def numeroAeropuertosConectados(catalog):
     catalog["AeropuertosRutasGraph"]["AeropuertosConConexion"]=0
     catalog["AeropuertosRutasDoblesGraph"]["AeropuertosConConexion"]=0
 
-###################
-# Construcción arcos en grafos
-###################
 
+# -----------------------------------------------------------
+# Construcción arcos en grafos (añadiendo rutas aéreas)
+# -----------------------------------------------------------
 
 def addRutasGraphDirigido(catalog,route):
     """
@@ -225,8 +224,24 @@ def addRutasNoDirigido(catalog):
     #     n+=1
 
 
+# -----------------------------------------------------------
+# REQUERIMIENTOS
+# -----------------------------------------------------------
 
-####### avance del requerimiento 3
+# --------REQ2--------------
+
+def clustersTrafico(catalog,aeropuerto1,aeropuerto2):
+    sccClusters=scc.KosarajuSCC(catalog["AeropuertosRutasGraph"])
+    aeropuertosPertenecen=scc.stronglyConnected(sccClusters,aeropuerto1,aeropuerto2)
+    componentesConectados=sccClusters["components"]
+    if aeropuertosPertenecen:
+        strAeropuertosPertenecen="SÍ"
+    else:
+        strAeropuertosPertenecen="NO"
+    return componentesConectados,strAeropuertosPertenecen
+
+
+# --------REQ3--------------
 
 def buscarCiudad(catalog,ciudad):
     """
@@ -288,10 +303,13 @@ def coordenadasCiudad(catalog,ciudad,pos=1):
 
 # Funciones de consulta
 
-def ultimaCiudadCargada(file):
-    pass
+# def ultimaCiudadCargada(file):
+#     pass
 
+# -----------------------------------------------------------
 # Funciones utilizadas para comparar elementos
+# -----------------------------------------------------------
+
 
 def compareString(stop, keyvaluestop):
     """
@@ -307,23 +325,13 @@ def compareString(stop, keyvaluestop):
 
 
 
-# Funciones de ordenamiento
 
 
 
-# ==============================
-#FUNCIONES  INFO EN GRAFOS
+# -----------------------------------------------------------
+# Funciones información en grafos
 # características específicas de cada uno de los grafos definidos
-# ==============================
-
-
-def connectedComponents(analyzer,nombreGrafo):
-    """
-    Calcula los componentes conectados del grafo
-    Se utiliza el algoritmo de Kosaraju
-    """
-    analyzer[nombreGrafo] = scc.KosarajuSCC(analyzer[nombreGrafo])
-    return scc.connectedComponents(analyzer[nombreGrafo])
+# -----------------------------------------------------------
 
 
 def totalAeropuertos(analyzer,nombreGrafo):

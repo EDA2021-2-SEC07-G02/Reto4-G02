@@ -70,6 +70,11 @@ def initCatalog():
     """
     return controller.initCatalog()
 
+def printInput(requerimiento,tipo):
+    if tipo=="Input":
+        print("-"*14 + "Requerimiento "+str(requerimiento)+" " + tipo+"s"+"-"*14)
+    elif tipo=="Resultado":
+        print("\n"+"-"*12 + "Requerimiento "+str(requerimiento)+" " + tipo+"s"+"-"*12)
 
 def printPrettyTable(lista, keys, field_names, max_width, sample=3, ultimas=False):
     artPretty=PrettyTable(hrules=prettytable.ALL)
@@ -102,6 +107,13 @@ def printPrettyTable(lista, keys, field_names, max_width, sample=3, ultimas=Fals
     
     print(artPretty)
 
+###REQ 2###
+def printCluster(respuesta,aeropuerto1,aeropuerto2):
+    nComponentes=respuesta[0]
+    aeropuertosPertenecen=respuesta[1]
+    print("El número de componentes fuertemente conectados es: "+str(nComponentes))
+    print("Los aeropuertos con código IATA: "+aeropuerto1 +" y "+aeropuerto2 + 
+        " pertenecen al mismo componente? : "+aeropuertosPertenecen)
 
 ###REQ 3###
 def printMenuCiudad(respuesta):
@@ -198,6 +210,10 @@ Menu principal
 while True:
     printMenu()
     inputs = input('Seleccione una opción para continuar\n')
+    
+    if inputs!="0" and inputs!="8":
+        printInput(inputs,"Input")
+
     print("\n")
     tiempoInicial=process_time()
     if int(inputs[0]) == 0:
@@ -217,8 +233,10 @@ while True:
         pass
 
     elif int(inputs[0]) == 2:
-        print("Por implementar......")
-        pass
+        aeropuerto1="LED"#input("Ingrese el código IATA del aeropuerto1: ")
+        aeropuerto2="RTP"#input("Ingrese el código IATA del aeropuerto2: ")
+        resultado=controller.clustersTrafico(catalog,aeropuerto1,aeropuerto2)
+        printCluster(resultado,aeropuerto1,aeropuerto2)
 
     elif int(inputs[0]) == 3:
         infoOrigen=printEscogerCiudad("Origen")

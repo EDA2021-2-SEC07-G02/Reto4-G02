@@ -83,8 +83,11 @@ def buscarCiudad(catalog,ciudad):
 
 def coordenadasCiudad(catalog,ciudad,pos=1):
     return model.coordenadasCiudad(catalog,ciudad,pos)
+
 # Funciones para la carga de datos
 
 # Funciones de ordenamiento
 
 # Funciones de consulta sobre el catálogo
+def clustersTrafico(catalog,aeropuerto1,aeropuerto2):
+    return model.clustersTrafico(catalog,aeropuerto1,aeropuerto2)
