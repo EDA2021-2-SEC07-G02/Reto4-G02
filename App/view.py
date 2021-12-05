@@ -70,6 +70,7 @@ def initCatalog():
     """
     return controller.initCatalog()
 
+
 def printPrettyTable(lista, keys, field_names, max_width, sample=3, ultimas=False):
     artPretty=PrettyTable(hrules=prettytable.ALL)
     artPretty.field_names=field_names
@@ -101,7 +102,9 @@ def printPrettyTable(lista, keys, field_names, max_width, sample=3, ultimas=Fals
     
     print(artPretty)
 
-def printEscogerCiudad(respuesta):
+
+###REQ 3###
+def printMenuCiudad(respuesta):
     ciudadRepetida=respuesta[0]
     listaCiudades=respuesta[1]
     sizeCiudades=listaCiudades["size"]
@@ -114,11 +117,45 @@ def printEscogerCiudad(respuesta):
         print("Hay ",sizeCiudades," ciudades con este nombre.")
         print("La información de las ciudades es la siguiente: ")
         #print("Por favor seleccione la ciudad que desea: ")
+    printTablaCiudades(listaCiudades)
 
+def printTablaCiudades(listaCiudadesPrev):
+    if "opcion" not in listaCiudadesPrev:
+        listaCiudadesPrev["opcion"]=0
+    if "size" not in listaCiudadesPrev:
+        listaCiudades=lt.newList("ARRAY_LIST")
+        lt.addLast(listaCiudades,listaCiudadesPrev)
+    else:
+        listaCiudades=listaCiudadesPrev
+    sizeCiudades=listaCiudades["size"]
     keys=["opcion","city","capital","lat","lng", "country"]
     fieldNames=["opcion","city","capital","lat","lng", "country"]
     maxWidth = {"opcion":3,"city": 20,"capital":20,"lat":10,"lng":10,"country":15}
     printPrettyTable(listaCiudades,keys,fieldNames,maxWidth,sample=sizeCiudades,ultimas=False)
+
+def printEscogerCiudad(tipoCiudad):
+    inputCiudad="Ingrese el nombre de la ciudad de "+tipoCiudad +":  "
+    ciudadOr=input(inputCiudad) #Springfield
+    resultadoCiudad=controller.buscarCiudad(catalog,ciudadOr)
+
+    printMenuCiudad(resultadoCiudad)
+    ciudadRepetida=resultadoCiudad[0]
+    ciudadLista=resultadoCiudad[1]
+    if ciudadRepetida>0:
+        continuar=True
+        if lt.size(ciudadLista)>1:
+            posicion=int(input("Escoga que ciudad de "+tipoCiudad+" desea elegir. \nIngrese el número de la ciudad de la columna opción: "))
+            ciudadOrigen=controller.coordenadasCiudad(catalog,ciudadOr,posicion)
+        else:
+            ciudadOrigen=controller.coordenadasCiudad(catalog,ciudadOr,pos=1)
+        
+        print("Información ciudad "+tipoCiudad+" elegida: \n")
+        printTablaCiudades(ciudadOrigen[0])
+    else:
+        continuar=False
+        ciudadOrigen=None
+    
+    return continuar,ciudadOrigen
 
 
 
@@ -168,12 +205,12 @@ while True:
 
         info=controller.loadServices(catalog)
         infoCargaCatalogo()
-        primerosAeropuertosGrafos=info[1]
+        primerosAeropuertosGrafos="FALTA HACER PRETTY TABLE"#info[1]
         ultimaCiudadCargada=info[2]
         #el primer aeropuerto es cargado a ambos grafos debido a la implementación que hicimos del model
         print("Primer aeropuerto cargado en ambos grafos: \n",primerosAeropuertosGrafos)
-        print("\nÚltima ciudad cargada a la tabla de simbolos: \n",ultimaCiudadCargada)
-
+        print("\nÚltima ciudad cargada a la tabla de simbolos: \n")
+        printTablaCiudades(ultimaCiudadCargada)
 
     elif int(inputs[0]) == 1:
         controller.numero(catalog)
@@ -184,32 +221,12 @@ while True:
         pass
 
     elif int(inputs[0]) == 3:
-
-        ciudadOr=input("Ingrese el nombre de la ciudad de origen:  ") #Springfield
-        resultadoCiudad=controller.buscarCiudad(catalog,ciudadOr)
-        printEscogerCiudad(resultadoCiudad)
-        ###Limpiar código xddd
-        if resultadoCiudad[0]>0:
-            if lt.size(resultadoCiudad[1])>1:
-                posicion=int(input("Escoga que ciudad de origen desea elegir. Ingrese el número de la ciudad de la columna opción: "))
-                ciudadOrigen=controller.coordenadasCiudad(catalog,ciudadOr,posicion)
-               
-            else:
-                ciudadOrigen=controller.coordenadasCiudad(catalog,ciudadOr,pos=1)
-            
-            print("INFO CIUDAD ORIGEN: \n",ciudadOrigen)
-
-            ciudadDes=input("Ingrese el nombre de la ciudad de destino:  ")
-            resultadoCiudadDes=controller.buscarCiudad(catalog,ciudadDes)
-            printEscogerCiudad(resultadoCiudadDes)
-            if resultadoCiudadDes[0]>0:
-                if lt.size(resultadoCiudadDes[1])>1:
-                    posicion=int(input("Escoga que ciudad de destino desea elegir. Ingrese el número de la ciudad de la columna opción: "))
-                    ciudadDestino=controller.coordenadasCiudad(catalog,ciudadDes,posicion)
-                    
-                else:
-                    ciudadDestino=controller.coordenadasCiudad(catalog,ciudadDes,pos=1)
-                print("INFO CIUDAD DESTINO: \n",ciudadDestino)
+        infoOrigen=printEscogerCiudad("Origen")
+        if infoOrigen[0]:
+            infoSalida=printEscogerCiudad("Destino")
+        else:
+            print("Error en el nombre")
+            pass #SE SIGUE IMPLEMENTANDO EL REQ3, Con info origen y infosalida se saben con precisión la info de ambas ciudades
 
     elif int(inputs[0]) == 4:
         print("Por implementar......")

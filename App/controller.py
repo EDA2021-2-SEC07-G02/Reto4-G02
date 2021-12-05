@@ -41,9 +41,9 @@ def loadServices(analyzer):
     aa
     """
 
-    archivo_aeropuertos = cf.data_dir + "Skylines/airports_full.csv"
-    archivo_rutas = cf.data_dir + "Skylines/routes_full.csv"
-    archivo_ciudades = cf.data_dir + "Skylines/worldcities.csv"
+    archivo_aeropuertos = cf.data_dir + "Skylines/airports-utf8-small.csv"
+    archivo_rutas = cf.data_dir + "Skylines/routes-utf8-small.csv"
+    archivo_ciudades = cf.data_dir + "Skylines/worldcities-utf8.csv"
 
     ###tablas de simbolos
     input_file_aeropuerts = csv.DictReader(open(archivo_aeropuertos, encoding="utf-8"),
@@ -62,9 +62,11 @@ def loadServices(analyzer):
     input_file_rutas = csv.DictReader(open(archivo_rutas, encoding="utf-8"),
                                 delimiter=",")
     for ruta in input_file_rutas:
-        model.addRutasAereas(analyzer,ruta)
+        #model.addRutasAereas(analyzer,ruta)
+        model.addRutasGraphDirigido(analyzer,ruta)
+    model.addRutasNoDirigido(analyzer)
     
-    infoView=model.addRuta(analyzer) #primeros aeropuertos cargados
+    infoView=None#model.addRuta(analyzer) #primeros aeropuertos cargados
 
     ultimaCiudad=ciudad
 
