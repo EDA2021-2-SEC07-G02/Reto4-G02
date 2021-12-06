@@ -36,41 +36,42 @@ def initCatalog():
     return model.initCatalog()
 
 
-def loadServices(analyzer):
+def loadServices(catalog):
     """
-    aa
+    Carga de info de archivos al catálogo
     """
 
     archivo_aeropuertos = cf.data_dir + "Skylines/airports-utf8-small.csv"
     archivo_rutas = cf.data_dir + "Skylines/routes-utf8-small.csv"
     archivo_ciudades = cf.data_dir + "Skylines/worldcities-utf8.csv"
 
-    ###tablas de simbolos
+    ###Se agrega info de aeropuertos y ciudades
     input_file_aeropuerts = csv.DictReader(open(archivo_aeropuertos, encoding="utf-8"),
                                 delimiter=",")
     input_file_ciudades= csv.DictReader(open(archivo_ciudades, encoding="utf-8"),
                                 delimiter=",")
-    print(type(input_file_ciudades))
+            
     for aeropuerto in input_file_aeropuerts:
-        model.addAeropuerto(analyzer,aeropuerto)
+        model.addAeropuerto(catalog,aeropuerto)
     
     for ciudad in input_file_ciudades:
-        model.addCity(analyzer,ciudad)
+        model.addCity(catalog,ciudad)
     
-    ### grafos
     
     input_file_rutas = csv.DictReader(open(archivo_rutas, encoding="utf-8"),
                                 delimiter=",")
     for ruta in input_file_rutas:
         #model.addRutasAereas(analyzer,ruta)
-        model.addRutasGraphDirigido(analyzer,ruta)
-    model.addRutasNoDirigido(analyzer)
+        model.addRutasGraphDirigido(catalog,ruta)
+    
+    model.addRutasNoDirigido(catalog)
+    model.arbolNConexiones(catalog)
     
     infoView=None#model.addRuta(analyzer) #primeros aeropuertos cargados
-
+    ultimoAeropuerto=aeropuerto
     ultimaCiudad=ciudad
 
-    return analyzer,infoView,ultimaCiudad
+    return catalog,infoView,ultimaCiudad
 
 def numero(catalog):
     model.densidad(catalog)
@@ -89,5 +90,8 @@ def coordenadasCiudad(catalog,ciudad,pos=1):
 # Funciones de ordenamiento
 
 # Funciones de consulta sobre el catálogo
+def puntosInterconexion(catalog):
+    return model.puntosInterconexion(catalog)
+
 def clustersTrafico(catalog,aeropuerto1,aeropuerto2):
     return model.clustersTrafico(catalog,aeropuerto1,aeropuerto2)

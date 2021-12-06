@@ -107,6 +107,17 @@ def printPrettyTable(lista, keys, field_names, max_width, sample=3, ultimas=Fals
     
     print(artPretty)
 
+def printConexiones(respuesta):
+    totalAeropuertosConectados=catalog["AeropuertosRutasGraph"]["AeropuertosConConexion"]
+    print("\nLa cantidad de aeropuertos que están conectados en el aeropuerto son: "+str(totalAeropuertosConectados))
+
+    print("\nEl top 5 de aeropuertos conectados son: \n")
+
+    keys=["Name","City","Country","IATA","connections", "inbound","outbound"]
+    fieldNames=["Name","City","Country","IATA","Connections", "Inbound","Outbound"]
+    maxWidth = {"Name":20,"City":20,"Country":15,"IATA":6,"Connections":5, "Inbound":5,"Outbound":5}
+    printPrettyTable(respuesta,keys,fieldNames,maxWidth,sample=5,ultimas=False)
+
 ###REQ 2###
 def printCluster(respuesta,aeropuerto1,aeropuerto2):
     nComponentes=respuesta[0]
@@ -229,7 +240,8 @@ while True:
         printTablaCiudades(ultimaCiudadCargada)
 
     elif int(inputs[0]) == 1:
-        controller.numero(catalog)
+        resultado=controller.puntosInterconexion(catalog)
+        printConexiones(resultado)
         pass
 
     elif int(inputs[0]) == 2:

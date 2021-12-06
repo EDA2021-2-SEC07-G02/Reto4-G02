@@ -30,9 +30,12 @@ from DISClib.ADT.graph import gr
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as mp
 from DISClib.DataStructures import mapentry as me
+from DISClib.ADT import orderedmap as om
 from DISClib.Algorithms.Graphs import scc
 from DISClib.Algorithms.Graphs import dijsktra as djk
+from DISClib.Algorithms.Trees import traversal as traversal
 from DISClib.Utils import error as error
+from math import radians, cos, sin, asin, sqrt
 assert cf
 
 
@@ -72,7 +75,10 @@ def initCatalog():
                                     maptype="CHAINING",
                                     loadfactor=4.0)
 
-                                
+    catalog["NumeroConexionesArbol"]=om.newMap(omaptype='RBT',
+                                   comparefunction=compareNConexiones)
+
+    catalog["RankingConexiones"]=lt.newList("ARRAY_LIST")              
 
     return catalog
     
@@ -87,7 +93,7 @@ def addCity(catalog,ciudad):
     Añade una ciudad a la tabla de simbolos de ciudades
     """
     cityAscii=ciudad["city_ascii"]
-    keyCity=cityAscii
+    keyCity=(cityAscii).strip()
     existCity=mp.contains(catalog["CiudadesTabla"],keyCity)
     if existCity:
         lt.addLast(mp.get(catalog["CiudadesTabla"],keyCity)["value"],ciudad)
@@ -150,11 +156,11 @@ def addRutasGraphDirigido(catalog,route):
     aeropuertoLlegada=route["Destination"]
     peso=float(route["distance_km"])
     addAeropuertoGraf(catalog,aeropuertoSalida,"AeropuertosRutasGraph")
-    
-    if gr.getEdge(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada) is None:
-        gr.addEdge(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada,peso)
-        agregarNumeroConexiones(catalog,aeropuertoLlegada,aeropuertoSalida) #se añaden keys a la tabla de aeropuertos
 
+    #DESCOMENTAR EL IF SI NO SE QUIEREN RUTAS REPETIDAS (SE REPITEN LAS RUTAS PARA QUE DE EL RESULTADO 1 DE LA FOTO DEL RETO)
+    #if gr.getEdge(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada) is None: #SIN repitir rutas
+    agregarNumeroConexiones(catalog,aeropuertoLlegada,aeropuertoSalida) #se añaden keys a la tabla de aeropuertos
+    gr.addEdge(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada,peso)
 
 def agregarNumeroConexiones(catalog,aeropuertoLlegada,aeropuertoSalida):
     """
@@ -201,32 +207,101 @@ def addRutasNoDirigido(catalog):
                 rutaDigraphL_S=gr.getEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoLlegada,aeropuertoSalida)
                 # print(aeropuertoSalida,aeropuertoLlegada,peso)
 
-                if (peso is not None) and (rutaDigraphS_L is None) and (rutaDigraphL_S is None): #si el camino es bidireccional y aún no existe el arco de a->b y de b-> a se adiciona al digrafo
+                if (peso is not None) and (rutaDigraphS_L is None) and (rutaDigraphL_S is None): #si el camino es bidireccional y aún no existe el arco de a->b y de b-> a se adiciona al grafo no dirigido
                     gr.addEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada,peso["weight"])
                
-    #No borrar estos prints porfis
     
-    #print(mp.get(catalog["AeropuertosTabla"],"LED"))
-    # print("PRUEBA// AEROPUERTOS CONECTADOS: ",catalog["AeropuertosRutasDoblesGraph"]["AeropuertosConConexion"])
+    
+def pruebasGrafos(catalog): #BORRAR DESPUÉS!!!!!!!!!
+    
+    print(mp.get(catalog["AeropuertosTabla"],"LED"))
+    print("PRUEBA// AEROPUERTOS CONECTADOS: ",catalog["AeropuertosRutasDoblesGraph"]["AeropuertosConConexion"])
 
-    # print("****************gr.edges()****************")
-    # for arco in lt.iterator(gr.edges(catalog["AeropuertosRutasDoblesGraph"])):
-    #     print(arco)
+    print("****************gr.edges()****************")
+    for arco in lt.iterator(gr.edges(catalog["AeropuertosRutasDoblesGraph"])):
+        print(arco)
 
-    # print("\n\n\n\n")
+    print("\n\n\n\n")
 
-    # keyseta=catalog["AeropuertosRutasDoblesGraph"]["vertices"]["table"]
-    # print("****************CON FOR IN****************")
-    # n=0
-    # for arco in lt.iterator(keyseta):
-    #     if arco["key"] is not None and arco["value"]["first"] is not None:
-    #         print("\n\n\n",n,arco)
-    #     n+=1
+    keyseta=catalog["AeropuertosRutasDoblesGraph"]["vertices"]["table"]
+    print("****************CON FOR IN****************")
+    n=0
+    for arco in lt.iterator(keyseta):
+        if arco["key"] is not None and arco["value"]["first"] is not None:
+            print("\n\n\n",n,arco)
+        n+=1
+    pass
 
+
+
+def arbolNConexiones(catalog):
+    infoAeropuertos=mp.valueSet(catalog["AeropuertosTabla"])
+    for infoAeropuerto in lt.iterator(infoAeropuertos):
+        conexiones=infoAeropuerto["connections"] #Número entero
+        if conexiones>0: #El árbol quedará solamente con áeropuertos que tengan más de una ruta
+            IATA=infoAeropuerto['IATA']
+            if om.contains(catalog['NumeroConexionesArbol'],conexiones):
+                lt.addLast(om.get(catalog['NumeroConexionesArbol'],conexiones)["value"],IATA)
+            else:
+                lista=lt.newList("ARRAY_LIST")
+                lt.addLast(lista,IATA)
+                om.put(catalog['NumeroConexionesArbol'],conexiones,lista)
+        
+    #print(catalog['NumeroConexionesArbol'])
+
+    catalog["RankingConexiones"]=inorderRanking(catalog['NumeroConexionesArbol'])
+    print("TAMAÑO ÁRBOL: ", om.size(catalog['NumeroConexionesArbol']))
+    # for rank in lt.iterator(catalog["RankingConexiones"]):
+    #     print(rank)
+def grafoCiudadesAeropuerto():
+    """
+    Este grafo funcionará para conocer la conexión entre 
+    ciudades.
+
+    Los identificadores de los vértices serán:
+         " idciudad - IATA (aeropuerto)"
+    Los arcos de las conexiones tendrán como peso la distancia
+    calculada con la fórmula de haversine
+
+    El grafo es dirigido
+    """
+    pass
+
+def identificadorCiudadAeropuerto(aeropuerto,ciudad):
+    """
+    Nombre del vertex
+    """
+
+    return aeropuerto + " - " + ciudad
 
 # -----------------------------------------------------------
 # REQUERIMIENTOS
 # -----------------------------------------------------------
+
+# --------REQ1--------------
+def puntosInterconexion(catalog,sample=5):
+    """
+    Retorna los 5 primeros aeropuertos con mayor conectividad
+    Parámetros:
+        catalog: carga de datos
+        sample (opcional): ranking de los aeropuertos de mayor 
+        a menor conectividad (por defecto son 5)
+    """
+    sizeRanking=lt.size(catalog["RankingConexiones"])
+    listaRespuesta=lt.newList("ARRAY_LIST")
+    i=sizeRanking
+    while listaRespuesta["size"]<sample:
+        ranking=lt.getElement(catalog["RankingConexiones"],i)
+        for aeropuerto in lt.iterator(ranking["value"]):
+            infoAeropuerto=mp.get(catalog["AeropuertosTabla"],aeropuerto)["value"]
+            lt.addLast(listaRespuesta,infoAeropuerto)
+            if lt.size(listaRespuesta)>=sample:
+                break
+        i-=1
+
+    return listaRespuesta
+
+
 
 # --------REQ2--------------
 
@@ -290,14 +365,36 @@ def coordenadasCiudad(catalog,ciudad,pos=1):
     Esta función retornará la coordenada de la ciudad escogida
     por el usuario
     """
-    #listCiudad=lt.newList("ARRAY_LIST") #lista con solo un elemento para que haya un print bonito en el view
     ciudadLista=mp.get(catalog["CiudadesTabla"],ciudad)["value"]
     ciudadEscogida=lt.getElement(ciudadLista,pos)
-    #lt.addLast(listCiudad,ciudadEscogida)
     coordenadaLat=ciudadEscogida["lat"]
     coordenadaLng=ciudadEscogida["lng"]
     return ciudadEscogida,coordenadaLat,coordenadaLng
 
+
+
+def haversine(lon1, lat1, lon2, lat2):
+    """
+    Esta función se utiliza para hacer los arcos del 
+    grafo de ciudades
+
+    #CÓDIGO DE: @Michael Dunn
+    #https://stackoverflow.com/questions/4913349/haversine-formula-
+    # in-python-bearing-and-distance-between-two-gps-points
+    _________
+    Calculate the great circle distance in kilometers between two points 
+    on the earth (specified in decimal degrees)
+    """
+    # convert decimal degrees to radians 
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+
+    # haversine formula 
+    dlon = lon2 - lon1 
+    dlat = lat2 - lat1 
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * asin(sqrt(a)) 
+    r = 6371 # Radius of earth in kilometers. Use 3956 for miles. Determines return value units.
+    return c * r
 
 # Funciones para creacion de datos
 
@@ -323,16 +420,30 @@ def compareString(stop, keyvaluestop):
     else:
         return -1
 
-
+def compareNConexiones(numero1,numero2):
+    """
+    Compara el número de dos conexiones (ej 5 vs 10)
+    """
+    if (numero1 == numero2):
+        return 0
+    elif (numero1 > numero2):
+        return 1
+    else:
+        return -1
 
 
 
 
 # -----------------------------------------------------------
-# Funciones información en grafos
-# características específicas de cada uno de los grafos definidos
+# Funciones view:
+# -> Funciones información en grafos
+# -> características específicas de cada uno de los grafos definidos
+# -> primer y último aeropuerto cargado
+# -> primera y última ciudad cargada
 # -----------------------------------------------------------
 
+def primerYUltimoElemento(file):
+    pass
 
 def totalAeropuertos(analyzer,nombreGrafo):
     """
@@ -353,4 +464,33 @@ def infoGrafo(analyzer,nombreGrafo):
     return vertices,arcos
     
 
+# -----------------------------------------------------------
+# Funciones complementarias y editadas para árboles
+# -----------------------------------------------------------
+
+def inorderRanking(omap):
+    """
+    Funciones de inorder editadas
+
+    Implementa un recorrido inorder.
+    Se guardan los elementos en una array list
+    para acceder a posiciones en tiempos O(1)
+    """
+    lst = lt.newList('ARRAY_LIST', omap['cmpfunction'])
+    if (omap is not None):
+        lst = inorderTree(omap['root'], lst)
+    return lst
+
+
+def inorderTree(root, lst):
+    """
+    Se agrega <Key, Value> a la lista de inorder
+    """
+    if (root is None):
+        return None
+    else:
+        inorderTree(root['left'], lst)
+        lt.addLast(lst, root)
+        inorderTree(root['right'], lst)
+    return lst
 
