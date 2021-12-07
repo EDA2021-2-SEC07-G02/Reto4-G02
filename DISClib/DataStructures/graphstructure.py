@@ -218,6 +218,45 @@ def getEdge(graph, vertexa, vertexb):
     if (graph['type'] == "ADJ_LIST"):
         return alt.getEdge(graph, vertexa, vertexb)
 
+def getEdgeLinea(graph, vertexa, vertexb,linea):
+    """
+    FUNCIÓN EDITADA PARA EL RETO
+    Retorna el arco asociado a los vertices vertexa ---- vertexb
+
+    Args:
+        graph: El grafo sobre el que se ejecuta la operacion
+        vertexa: Vertice de inicio
+        vertexb: Vertice destino
+
+    Returns:
+        El grado el arco
+    Raises:
+        Exception
+    """
+    if (graph['type'] == "ADJ_LIST"):
+        return alt.getEdgeLinea(graph, vertexa, vertexb,linea)
+
+def addEdgeLinea(graph, vertexa, vertexb, weight,linea):
+    """
+    FUNCIÓN EDITADA PARA EL RETO
+    Agrega un arco entre los vertices vertexa ---- vertexb, con peso weight.
+    Si el grafo es no dirigido se adiciona dos veces el mismo arco,
+    en el mismo orden
+    Si el grafo es dirigido se adiciona solo el arco vertexa --> vertexb
+
+    Args:
+        graph: El grafo sobre el que se ejecuta la operacion
+        vertexa: Vertice de inicio
+        vertexb: Vertice de destino
+        wight: peso del arco
+
+    Returns:
+       True si el vertice esta presente
+    Raises:
+        Exception
+    """
+    if (graph['type'] == "ADJ_LIST"):
+        return alt.addEdgeLinea(graph, vertexa, vertexb, weight,linea)
 
 def addEdge(graph, vertexa, vertexb, weight):
     """

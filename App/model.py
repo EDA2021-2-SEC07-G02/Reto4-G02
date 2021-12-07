@@ -25,7 +25,9 @@
  """
 
 
+from DISClib.DataStructures.arraylist import addLast
 import config as cf
+import folium
 from DISClib.ADT.graph import gr
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as mp
@@ -146,8 +148,7 @@ def addRutasGraphDirigido(catalog,route):
     Vértices -> TODOS los aeropuertos que hay en el archivo de airports
     Arcos -> Todas las rutas a->b 
         !Nota: Los arcos representarán si hay una ruta de un AeropuertoA
-        a un AeropuertoB, no importará la aerolínea (es decir que no hay
-        repetición de rutas áereas)
+        a un AeropuertoB, así mismo se tiene un identificador de Aerolínea
 
     Así mismo, se van añadiendo informaciones a la tabla de 
     aeropuertos como lo es connections, inbound, outbound
@@ -155,12 +156,10 @@ def addRutasGraphDirigido(catalog,route):
     aeropuertoSalida=route["Departure"]
     aeropuertoLlegada=route["Destination"]
     peso=float(route["distance_km"])
+    linea=route["Airline"]
     addAeropuertoGraf(catalog,aeropuertoSalida,"AeropuertosRutasGraph")
-
-    #DESCOMENTAR EL IF SI NO SE QUIEREN RUTAS REPETIDAS (SE REPITEN LAS RUTAS PARA QUE DE EL RESULTADO 1 DE LA FOTO DEL RETO)
-    #if gr.getEdge(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada) is None: #SIN repitir rutas
     agregarNumeroConexiones(catalog,aeropuertoLlegada,aeropuertoSalida) #se añaden keys a la tabla de aeropuertos
-    gr.addEdge(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada,peso)
+    gr.addEdgeLinea(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada,peso,linea)
 
 def agregarNumeroConexiones(catalog,aeropuertoLlegada,aeropuertoSalida):
     """
@@ -200,15 +199,17 @@ def addRutasNoDirigido(catalog):
     for aeropuertoSalida in lt.iterator(listaAeropuertos): #recorro todos los vértices del grafo
         conectado=agregarAeropuertosConConexiones(catalog,aeropuertoSalida) #compruebo si el aeropuerto tiene conexiones o no
         if conectado:
-            adyacentes=gr.adjacents(catalog["AeropuertosRutasGraph"],aeropuertoSalida)
-            for aeropuertoLlegada in lt.iterator(adyacentes):#voy a recorrer los adyacentes
-                peso=gr.getEdge(catalog["AeropuertosRutasGraph"],aeropuertoLlegada,aeropuertoSalida) 
-                rutaDigraphS_L=gr.getEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada)
-                rutaDigraphL_S=gr.getEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoLlegada,aeropuertoSalida)
+            adyacentes=gr.adjacentEdges(catalog["AeropuertosRutasGraph"],aeropuertoSalida)#gr.adjacents(catalog["AeropuertosRutasGraph"],aeropuertoSalida)
+            for aeropuertoLlegadaEdge in lt.iterator(adyacentes):#voy a recorrer los adyacentes
+                aeropuertoLlegada=aeropuertoLlegadaEdge["vertexB"]
+                linea=aeropuertoLlegadaEdge["lineaA"] #obtengo la línea aérea
+                peso=gr.getEdgeLinea(catalog["AeropuertosRutasGraph"],aeropuertoLlegada,aeropuertoSalida,linea) 
+                rutaDigraphS_L=gr.getEdgeLinea(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada,linea)
+                rutaDigraphL_S=gr.getEdgeLinea(catalog["AeropuertosRutasDoblesGraph"],aeropuertoLlegada,aeropuertoSalida,linea)
                 # print(aeropuertoSalida,aeropuertoLlegada,peso)
 
                 if (peso is not None) and (rutaDigraphS_L is None) and (rutaDigraphL_S is None): #si el camino es bidireccional y aún no existe el arco de a->b y de b-> a se adiciona al grafo no dirigido
-                    gr.addEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada,peso["weight"])
+                    gr.addEdgeLinea(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada,peso["weight"],linea)
                
     
     
@@ -246,13 +247,10 @@ def arbolNConexiones(catalog):
                 lista=lt.newList("ARRAY_LIST")
                 lt.addLast(lista,IATA)
                 om.put(catalog['NumeroConexionesArbol'],conexiones,lista)
-        
-    #print(catalog['NumeroConexionesArbol'])
 
     catalog["RankingConexiones"]=inorderRanking(catalog['NumeroConexionesArbol'])
     print("TAMAÑO ÁRBOL: ", om.size(catalog['NumeroConexionesArbol']))
-    # for rank in lt.iterator(catalog["RankingConexiones"]):
-    #     print(rank)
+
 def grafoCiudadesAeropuerto():
     """
     Este grafo funcionará para conocer la conexión entre 
@@ -298,7 +296,6 @@ def puntosInterconexion(catalog,sample=5):
             if lt.size(listaRespuesta)>=sample:
                 break
         i-=1
-
     return listaRespuesta
 
 
@@ -313,7 +310,7 @@ def clustersTrafico(catalog,aeropuerto1,aeropuerto2):
         strAeropuertosPertenecen="SÍ"
     else:
         strAeropuertosPertenecen="NO"
-    return componentesConectados,strAeropuertosPertenecen
+    return componentesConectados,strAeropuertosPertenecen,sccClusters,aeropuerto1,aeropuerto2
 
 
 # --------REQ3--------------
@@ -400,8 +397,34 @@ def haversine(lon1, lat1, lon2, lat2):
 
 # Funciones de consulta
 
-# def ultimaCiudadCargada(file):
-#     pass
+# -----------------------------------------------------------
+# Controller para ver primer y último item cargado
+# -----------------------------------------------------------
+
+def primerItem(file):
+    """
+    Obtiene el primer item de un archivo y lo agrega
+    a una lista
+    """
+    rtaLista=lt.newList("ARRAY_LIST")
+    for item in file:
+        print(item)
+        addLast(rtaLista,item)
+        if lt.size(rtaLista)>=1:
+            break
+    print("PRIMERFUNCION",rtaLista)
+    return rtaLista
+
+def agregarItem(rtaLista,item):
+    lt.addLast(rtaLista,item)
+    return rtaLista
+
+def verPrimerosYUltimos(item1,item2):
+    rtaLista=lt.newList("ARRAY_LIST")
+    lt.addLast(rtaLista,item1)
+    lt.addLast(rtaLista,item2)
+    return rtaLista
+
 
 # -----------------------------------------------------------
 # Funciones utilizadas para comparar elementos
@@ -462,10 +485,83 @@ def infoGrafo(analyzer,nombreGrafo):
     vertices=totalAeropuertos(analyzer,nombreGrafo)
     arcos=totalRutas(analyzer,nombreGrafo)
     return vertices,arcos
-    
 
 # -----------------------------------------------------------
-# Funciones complementarias y editadas para árboles
+# BONO GRÁFICAS
+# -----------------------------------------------------------   
+
+def bonoRequerimiento1(resultado):
+    mapgraf=folium.Map(location=[0,0],zoom_start=1) #Se crea el mapa
+    puestoAeropuerto=1
+    for aeropuerto in lt.iterator(resultado):
+        latitud=aeropuerto["Latitude"]
+        longitud=aeropuerto["Longitude"]
+        IATA=aeropuerto["IATA"]
+        conexiones=aeropuerto["connections"]
+        ciudadPais=aeropuerto["City"] +", "+aeropuerto["Country"]
+        nAeropuerto="Place #"+str(puestoAeropuerto) + " - " + IATA
+        infoPopUp=str("<br><b>"+nAeropuerto+ "&nbsp"+ "</b>"
+                            + "<br><b> #Conexiones: </b> "+conexiones
+                            + "<br><b> Código IATA: </b> "+IATA
+                            + "<br><b> Ciudad, País: </b>"+ciudadPais)
+        infoHTML=folium.Html(infoPopUp,script=True)
+        (folium.Marker(location=[latitud, longitud], popup=folium.Popup(infoHTML, parse_html=False),
+                        icon=folium.Icon(color="darkpurple"),tooltip=nAeropuerto)).add_to(mapgraf)
+        puestoAeropuerto+=1
+
+    return mapgraf
+
+def bonoRequerimiento2(catalog,resultado):
+    mapgraf=folium.Map(location=[0,0],zoom_start=1) #Se crea el mapa
+    infoGraf=masInfoGraf(catalog,resultado) #return info1,info2,componentesInfo1,componentesInfo2
+    info1,info2,componentesInfo1,componentesInfo2=infoGraf
+    markersReq2(mapgraf,componentesInfo1,info1, "darkblue","lightblue")
+    markersReq2(mapgraf,componentesInfo2,info2,"darkgreen","lightgreen")
+    return mapgraf
+
+def markersReq2(mapgraf, componente,infon,colorComponente, colorIATA):
+    IATAn=infon["IATA"]
+    #-> Limpiar código después
+    # for aeropuerto in componente:
+    #     toolTip="Componentes del aeropuerto: "+IATAn
+    #     latitud=aeropuerto["Latitude"]
+    #     longitud=aeropuerto["Longitude"]
+    #     IATA=aeropuerto["IATA"]
+    #     infoPorIata=str("<br><b>"+str(toolTip)+ "</b>"
+    #                     +"<br><b>Código IATA </b>"+IATA)
+    #     (folium.Marker(location=[latitud, longitud], popup=folium.Popup(infoPorIata, parse_html=False),
+    #                     icon=folium.Icon(color=colorComponente),tooltip=toolTip)).add_to(mapgraf)
+    
+    (folium.Marker(location=[infon["Latitude"], infon["Longitude"]], 
+                    popup=folium.Popup(str("<br><b> AEROPUERTO: "+IATAn+ "</b>"+
+                    " <br><b> Componentes conectados:  #"+str(componente["value"])+ "</b>"), parse_html=False),
+                        icon=folium.Icon(color=colorIATA),tooltip=str("!!!AEROPUERTO ESCOGIDO:"+IATAn))).add_to(mapgraf)
+    return mapgraf
+
+def masInfoGraf(catalog,resultado):
+    sccClusters=resultado[2]
+    aeropuerto1=resultado[3]
+    aeropuerto2=resultado[4]
+    info1=mp.get(catalog["AeropuertosTabla"],aeropuerto1)["value"]
+    info2=mp.get(catalog["AeropuertosTabla"],aeropuerto2)["value"]
+    componentes1= mp.get(sccClusters['idscc'], aeropuerto1)
+    componentes2=mp.get(sccClusters['idscc'], aeropuerto2)
+    componentesInfo1=componentes1#infoAeropuertos(catalog,componentes1)
+    componentesInfo2=componentes2#infoAeropuertos(catalog,componentes2)
+    return info1,info2,componentesInfo1,componentesInfo2
+
+# def infoAeropuertos(catalog,lista):
+#     """
+#     Devuelve la información de todos los códigos IATA en una lista
+#     """
+#     infoLista=lt.newList("ARRAY_LIST")
+#     for aeropuerto in lista:
+#         elemento=mp.get(catalog["AeropuertosTabla"],aeropuerto)
+#         lt.addLast(infoLista,elemento)
+#     return infoAeropuertos
+
+# -----------------------------------------------------------
+# Funciones complementarias y editadas de la DISClib para árboles
 # -----------------------------------------------------------
 
 def inorderRanking(omap):

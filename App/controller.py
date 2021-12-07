@@ -51,9 +51,21 @@ def loadServices(catalog):
     input_file_ciudades= csv.DictReader(open(archivo_ciudades, encoding="utf-8"),
                                 delimiter=",")
             
-    for aeropuerto in input_file_aeropuerts:
-        model.addAeropuerto(catalog,aeropuerto)
     
+    
+    itemPrimeroA=None
+    for item in (input_file_aeropuerts):
+        itemPrimeroA=item
+        if itemPrimeroA is not None:
+            break
+    for aeropuerto in input_file_aeropuerts:
+            model.addAeropuerto(catalog,aeropuerto)
+    itemPrimeroB=None
+    for item in (input_file_ciudades):
+        itemPrimeroB=item
+        if itemPrimeroB is not None:
+            break
+
     for ciudad in input_file_ciudades:
         model.addCity(catalog,ciudad)
     
@@ -61,17 +73,29 @@ def loadServices(catalog):
     input_file_rutas = csv.DictReader(open(archivo_rutas, encoding="utf-8"),
                                 delimiter=",")
     for ruta in input_file_rutas:
-        #model.addRutasAereas(analyzer,ruta)
         model.addRutasGraphDirigido(catalog,ruta)
     
     model.addRutasNoDirigido(catalog)
     model.arbolNConexiones(catalog)
-    
-    infoView=None#model.addRuta(analyzer) #primeros aeropuertos cargados
-    ultimoAeropuerto=aeropuerto
-    ultimaCiudad=ciudad
+   
 
-    return catalog,infoView,ultimaCiudad
+    aeropuertoView=model.verPrimerosYUltimos(itemPrimeroA,aeropuerto)
+    ciudadView=model.verPrimerosYUltimos(itemPrimeroB,ciudad)
+
+    return catalog,aeropuertoView,ciudadView
+
+def primerItem(file):
+    """
+    Obtiene el primer item de un archivo
+    """
+    itemPrimero=None
+    for item in csv.reader(file):
+        print(item)
+        itemPrimero=item
+        if itemPrimero is not None:
+            break
+    
+    return itemPrimero
 
 def numero(catalog):
     model.densidad(catalog)
@@ -95,3 +119,9 @@ def puntosInterconexion(catalog):
 
 def clustersTrafico(catalog,aeropuerto1,aeropuerto2):
     return model.clustersTrafico(catalog,aeropuerto1,aeropuerto2)
+
+def bonoRequerimiento1(resultados):
+    return model.bonoRequerimiento1(resultados)
+
+def bonoRequerimiento2(catalog,resultados):
+    return model.bonoRequerimiento2(catalog,resultados)

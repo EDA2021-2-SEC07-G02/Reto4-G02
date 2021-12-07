@@ -27,6 +27,7 @@ from DISClib.ADT import list as lt
 from time import process_time
 import prettytable
 from prettytable import PrettyTable
+from IPython.display import display
 assert cf
 
 
@@ -107,6 +108,12 @@ def printPrettyTable(lista, keys, field_names, max_width, sample=3, ultimas=Fals
     
     print(artPretty)
 
+def printAeropuertos(respuesta):
+    keys=["Name","City","Country","IATA", "Latitude","Longitude"]
+    fieldNames=["Name","City","Country","IATA", "Latitude","Longitude"]
+    maxWidth = {"Name":20,"City":20,"Country":15,"IATA":6,"Latitude":10, "Longitude":10}
+    printPrettyTable(respuesta,keys,fieldNames,maxWidth,sample=lt.size(respuesta),ultimas=False)
+
 def printConexiones(respuesta):
     totalAeropuertosConectados=catalog["AeropuertosRutasGraph"]["AeropuertosConConexion"]
     print("\nLa cantidad de aeropuertos que están conectados en el aeropuerto son: "+str(totalAeropuertosConectados))
@@ -145,11 +152,17 @@ def printMenuCiudad(respuesta):
 def printTablaCiudades(listaCiudadesPrev):
     if "opcion" not in listaCiudadesPrev:
         listaCiudadesPrev["opcion"]=0
+    
     if "size" not in listaCiudadesPrev:
         listaCiudades=lt.newList("ARRAY_LIST")
         lt.addLast(listaCiudades,listaCiudadesPrev)
     else:
-        listaCiudades=listaCiudadesPrev
+        if "opcion" not in lt.getElement(listaCiudadesPrev,1):
+            for city in lt.iterator(listaCiudadesPrev):
+                city["opcion"]=0
+            listaCiudades=listaCiudadesPrev
+        else:
+            listaCiudades=listaCiudadesPrev
     sizeCiudades=listaCiudades["size"]
     keys=["opcion","city","capital","lat","lng", "country"]
     fieldNames=["opcion","city","capital","lat","lng", "country"]
@@ -234,14 +247,17 @@ while True:
         infoCargaCatalogo()
         primerosAeropuertosGrafos="FALTA HACER PRETTY TABLE"#info[1]
         ultimaCiudadCargada=info[2]
+        aeropuerto=info[1]
         #el primer aeropuerto es cargado a ambos grafos debido a la implementación que hicimos del model
         print("Primer aeropuerto cargado en ambos grafos: \n",primerosAeropuertosGrafos)
+        printAeropuertos(aeropuerto)
         print("\nÚltima ciudad cargada a la tabla de simbolos: \n")
         printTablaCiudades(ultimaCiudadCargada)
 
     elif int(inputs[0]) == 1:
         resultado=controller.puntosInterconexion(catalog)
         printConexiones(resultado)
+        display(controller.bonoRequerimiento1(resultado))
         pass
 
     elif int(inputs[0]) == 2:
@@ -249,6 +265,7 @@ while True:
         aeropuerto2="RTP"#input("Ingrese el código IATA del aeropuerto2: ")
         resultado=controller.clustersTrafico(catalog,aeropuerto1,aeropuerto2)
         printCluster(resultado,aeropuerto1,aeropuerto2)
+        display(controller.bonoRequerimiento2(catalog,resultado))
 
     elif int(inputs[0]) == 3:
         infoOrigen=printEscogerCiudad("Origen")

@@ -43,6 +43,16 @@ def newEdge(va, vb, weight=0):
     return edge
 
 
+def newEdgeLinea(va, vb, linea, weight=0):
+    """
+    Crea un nuevo arco entrelos vertices va y vb
+    """
+    edge = {'vertexA': va,
+            'vertexB': vb,
+            'weight': weight,
+            "lineaA":linea}
+    return edge
+
 def weight(edge):
     """
     Retorna el peso de un arco

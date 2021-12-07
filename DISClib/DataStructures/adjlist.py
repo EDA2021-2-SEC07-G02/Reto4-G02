@@ -287,6 +287,43 @@ def getEdge(graph, vertexa, vertexb):
     except Exception as exp:
         error.reraise(exp, 'ajlist:getedge')
 
+def getEdgeLinea(graph, vertexa, vertexb,linea):
+    """
+    FUNCIÓN EDITADA PARA HACER GRAFOS DEL RETO
+    Retorna el arco asociado a los vertices vertexa ---- vertexb
+
+    Args:
+        graph: El grafo sobre el que se ejecuta la operacion
+        vertexa: Vertice de inicio
+        vertexb: Vertice destino
+
+    Returns:
+        El arco que une los verices vertexa y vertexb
+    Raises:
+        Exception
+    """
+    try:
+        element = map.get(graph['vertices'], vertexa)
+        lst = element['value']
+        for edge in lt.iterator(lst):
+            if (graph['directed']):
+                if (e.either(edge) == vertexa and
+                   (e.other(edge, e.either(edge)) == vertexb)) and (lineaEdge(edge)==linea):
+                    return edge
+            elif(e.either(edge) == vertexa or
+                 (e.other(edge, e.either(edge)) == vertexa)):
+                if (e.either(edge) == vertexb or
+                   (e.other(edge, e.either(edge)) == vertexb)) and (lineaEdge(edge)==linea):
+                    return edge
+        return None
+    except Exception as exp:
+        error.reraise(exp, 'ajlist:getedge')
+
+def lineaEdge(edge):
+    """
+    Obtiene el key de la linea
+    """
+    return edge["lineaA"]
 
 def containsVertex(graph, vertex):
     """
@@ -344,6 +381,43 @@ def addEdge(graph, vertexa, vertexb, weight=0):
     except Exception as exp:
         error.reraise(exp, 'ajlist:addedge')
 
+def addEdgeLinea(graph, vertexa, vertexb,linea, weight=0):
+    """
+    FUNCIÓN EDITADA PARA EL RETO
+    Agrega un arco entre los vertices vertexa ---- vertexb, con peso weight.
+    Si el grafo es no dirigido se adiciona dos veces el mismo arco,
+    en el mismo orden
+    Si el grafo es dirigido se adiciona solo el arco vertexa --> vertexb
+
+    Args:
+        graph: El grafo sobre el que se ejecuta la operacion
+        vertexa: Vertice de inicio
+        vertexb: Vertice de destino
+        wight: peso del arco
+
+    Returns:
+       El grafo con el nuevo arco
+    Raises:
+        Exception
+    """
+    try:
+        # Se crea el arco
+        edge = e.newEdgeLinea(vertexa, vertexb, weight,linea)
+        # Se obtienen las listas de adyacencias de cada vertice
+        # Se anexa a cada lista el arco correspondiente
+        entrya = map.get(graph['vertices'], vertexa)
+        lt.addLast(entrya['value'], edge)
+        if (not graph['directed']):
+            entryb = map.get(graph['vertices'], vertexb)
+            edgeb = e.newEdgeLinea(vertexb, vertexa, weight,linea)
+            lt.addLast(entryb['value'], edgeb)
+        else:
+            degree = map.get(graph['indegree'], vertexb)
+            map.put(graph['indegree'], vertexb, degree['value']+1)
+        graph['edges'] += 1
+        return graph
+    except Exception as exp:
+        error.reraise(exp, 'ajlist:addedge')
 
 def adjacents(graph, vertex):
     """
