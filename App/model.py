@@ -71,6 +71,10 @@ def initCatalog():
     catalog["CiudadesTabla"]=mp.newMap(numelements=37831, 
                                     maptype="CHAINING",
                                     loadfactor=4.0)
+    
+    catalog["CiudadesHomonimasTabla"]=mp.newMap(numelements=5000, 
+                                    maptype="PROBING",
+                                    loadfactor=0.5)
 
     #9075 aeropuertos, 37411 ciudades únicas
     catalog["AeropuertosTabla"]= mp.newMap(numelements=10061,
@@ -98,11 +102,46 @@ def addCity(catalog,ciudad):
     keyCity=(cityAscii).strip()
     existCity=mp.contains(catalog["CiudadesTabla"],keyCity)
     if existCity:
-        lt.addLast(mp.get(catalog["CiudadesTabla"],keyCity)["value"],ciudad)
+        city=mp.get(catalog["CiudadesTabla"],keyCity)["value"]  #["ListaCiudades"]
+        lt.addLast(city["ListaCiudades"],ciudad)
+        city["Homonima"]=True
+        mp.put(catalog["CiudadesHomonimasTabla"],identificadorHom(ciudad),cityHom(ciudad))
+
     else:
-        listCitiesId=lt.newList(datastructure="ARRAY_LIST")
-        lt.addLast(listCitiesId,ciudad)
-        mp.put(catalog["CiudadesTabla"],cityAscii,listCitiesId) 
+        mp.put(catalog["CiudadesTabla"],cityAscii,cityDict(ciudad))
+        
+def identificadorHom(ciudad):
+    """
+    Identificador tabla de homónimas
+    """
+    return ciudad["city_ascii"] + " - " + ciudad["id"]
+
+def cityDict(ciudad):
+    """
+    Value tabla de símbolos de CiudadesTabla
+    """
+    dictValue={"ListaCiudades":None,
+                "AeropuertoCercano":None,
+                "Homonima":False,
+                "ListaAeropuertos":None}
+    dictValue["ListaCiudades"]=lt.newList(datastructure="ARRAY_LIST")
+    dictValue["ListaAeropuertos"]=lt.newList(datastructure="ARRAY_LIST")
+    lt.addLast(dictValue["ListaCiudades"],formatCiudad(ciudad))
+    return dictValue
+
+def formatCiudad(ciudad):
+    ciudad['lat']=float(ciudad['lat'])
+    ciudad['lng']=float(ciudad['lng'])
+    return ciudad
+
+def cityHom(ciudad):
+    """
+    Value tabla de símbolos de CiudadesHomonimas Tabla
+    """
+    dictValue={"AeropuertoCercano": None,
+                "Latitud":ciudad["lat"],
+                "Longitud":ciudad["lng"]}
+    return dictValue
 
 def addAeropuerto(catalog,aeropuerto): #Nota: en el archivo no hay aeropuertos repetidos
     """
@@ -116,6 +155,31 @@ def addAeropuerto(catalog,aeropuerto): #Nota: en el archivo no hay aeropuertos r
     mp.put(catalog["AeropuertosTabla"],IATA,aeropuerto)
     addAeropuertoGraf(catalog,IATA,"AeropuertosRutasGraph") 
     addAeropuertoGraf(catalog,IATA,"AeropuertosRutasDoblesGraph")
+    addAeropuertoCity(catalog,aeropuerto)
+
+def addAeropuertoCity(catalog,aeropuerto):
+    IATA=aeropuerto["IATA"]
+    cityAeropuerto=aeropuerto["City"]
+    if mp.contains(catalog["CiudadesTabla"],cityAeropuerto):
+        
+        city=mp.get(catalog["CiudadesTabla"],cityAeropuerto)["value"]
+        if city["Homonima"]:
+            pass #COMPLETAR QUE PASA SI ES HOMONIMA
+        else:
+            lt.addLast(city["ListaAeropuertos"],IATA)
+            latAeropuerto=float(aeropuerto["Latitude"])
+            longAeropuerto=float(aeropuerto["Longitude"])
+            latCity=city["ListaCiudades"]['elements'][0]["lat"]
+            longCity=city["ListaCiudades"]['elements'][0]["lng"]
+            distancia=haversine(longCity,latCity,longAeropuerto,latAeropuerto)
+            if city["AeropuertoCercano"] is None:
+                city["AeropuertoCercano"]={"IATA":IATA,
+                                            "Distancia":distancia}  #se pone como aeropuerto cercano al primer aeropuerto que haya sido añadido
+            else:
+                if distancia<city["AeropuertoCercano"]["Distancia"]: #Se compara cual es el aeropuerto más cercano
+                    city["AeropuertoCercano"]["IATA"]=IATA
+
+
 
 
 def addAeropuertoGraf(catalog, vertice,nombreGrafo): #añade un aeropuerto como vértice
@@ -332,7 +396,7 @@ def buscarCiudad(catalog,ciudad):
     ciudadRepetida=None
     ciudadLista=None
     if mp.contains(catalog["CiudadesTabla"],ciudad):
-        ciudadLista=mp.get(catalog["CiudadesTabla"],ciudad)["value"] #retorna una lista
+        ciudadLista=mp.get(catalog["CiudadesTabla"],ciudad)["value"]["ListaCiudades"] #retorna una lista
         if lt.size(ciudadLista)>1:
             ciudadRepetida=2 #El nombre de la ciudad se repite
         else:
@@ -359,14 +423,33 @@ def buscarCiudad(catalog,ciudad):
 
 def coordenadasCiudad(catalog,ciudad,pos=1):
     """
-    Esta función retornará la coordenada de la ciudad escogida
-    por el usuario
+    Esta función retornará el aeropuerto más
+    cercano de la ciudad escogida por el usuario
     """
     ciudadLista=mp.get(catalog["CiudadesTabla"],ciudad)["value"]
-    ciudadEscogida=lt.getElement(ciudadLista,pos)
-    coordenadaLat=ciudadEscogida["lat"]
-    coordenadaLng=ciudadEscogida["lng"]
-    return ciudadEscogida,coordenadaLat,coordenadaLng
+    ciudadEscogida=lt.getElement(ciudadLista["ListaCiudades"],pos)
+    if ciudadLista["Homonima"]: #COMPLETAR
+        pass
+    else:
+        aeropuerto= ciudadLista['AeropuertoCercano']['IATA']
+    # coordenadaLat=ciudadEscogida["lat"]
+    # coordenadaLng=ciudadEscogida["lng"]
+    return ciudadEscogida,aeropuerto
+
+def caminoCorto(catalog,aeropuerto1,aeropuerto2):
+    """
+    """
+    busqueda=djk.Dijkstra(catalog["AeropuertosRutasGraph"],aeropuerto1)
+    
+    if djk.hasPathTo(busqueda,aeropuerto2):
+        distCorta=djk.distTo(busqueda,aeropuerto2)
+        ruta=djk.pathTo(busqueda,aeropuerto2)
+    #print(busqueda)
+    else:
+        distCorta=0
+        ruta="NO HAY"
+    print(ruta)
+    return distCorta,ruta
 
 
 
@@ -408,11 +491,9 @@ def primerItem(file):
     """
     rtaLista=lt.newList("ARRAY_LIST")
     for item in file:
-        print(item)
         addLast(rtaLista,item)
         if lt.size(rtaLista)>=1:
             break
-    print("PRIMERFUNCION",rtaLista)
     return rtaLista
 
 def agregarItem(rtaLista,item):

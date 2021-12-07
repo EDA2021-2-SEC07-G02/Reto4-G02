@@ -191,7 +191,7 @@ def printEscogerCiudad(tipoCiudad):
         continuar=False
         ciudadOrigen=None
     
-    return continuar,ciudadOrigen
+    return continuar,ciudadOrigen[1]
 
 
 
@@ -269,8 +269,14 @@ while True:
 
     elif int(inputs[0]) == 3:
         infoOrigen=printEscogerCiudad("Origen")
+        #print(infoOrigen)
         if infoOrigen[0]:
             infoSalida=printEscogerCiudad("Destino")
+            #print(infoSalida)
+            aeropuerto1=infoOrigen[1]
+            aeropuerto2=infoSalida[1]
+            #print(aeropuerto1,aeropuerto2)
+            resultado=controller.caminoCorto(catalog,aeropuerto1,aeropuerto2)
         else:
             print("Error en el nombre")
             pass #SE SIGUE IMPLEMENTANDO EL REQ3, Con info origen y infosalida se saben con precisión la info de ambas ciudades

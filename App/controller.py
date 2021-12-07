@@ -41,7 +41,7 @@ def loadServices(catalog):
     Carga de info de archivos al catálogo
     """
 
-    archivo_aeropuertos = cf.data_dir + "Skylines/airports-utf8-small.csv"
+    archivo_aeropuertos = cf.data_dir + "Skylines/airports-utf8-50pct.csv"
     archivo_rutas = cf.data_dir + "Skylines/routes-utf8-small.csv"
     archivo_ciudades = cf.data_dir + "Skylines/worldcities-utf8.csv"
 
@@ -51,8 +51,16 @@ def loadServices(catalog):
     input_file_ciudades= csv.DictReader(open(archivo_ciudades, encoding="utf-8"),
                                 delimiter=",")
             
+    itemPrimeroB=None
+    for item in (input_file_ciudades):
+        itemPrimeroB=item
+        if itemPrimeroB is not None:
+            break
+    for ciudad in input_file_ciudades:
+        model.addCity(catalog,ciudad)
     
-    
+
+
     itemPrimeroA=None
     for item in (input_file_aeropuerts):
         itemPrimeroA=item
@@ -60,14 +68,9 @@ def loadServices(catalog):
             break
     for aeropuerto in input_file_aeropuerts:
             model.addAeropuerto(catalog,aeropuerto)
-    itemPrimeroB=None
-    for item in (input_file_ciudades):
-        itemPrimeroB=item
-        if itemPrimeroB is not None:
-            break
+    
 
-    for ciudad in input_file_ciudades:
-        model.addCity(catalog,ciudad)
+    
     
     
     input_file_rutas = csv.DictReader(open(archivo_rutas, encoding="utf-8"),
@@ -119,6 +122,9 @@ def puntosInterconexion(catalog):
 
 def clustersTrafico(catalog,aeropuerto1,aeropuerto2):
     return model.clustersTrafico(catalog,aeropuerto1,aeropuerto2)
+
+def caminoCorto(catalog,aeropuerto1,aeropuerto2):
+    return model.caminoCorto(catalog,aeropuerto1,aeropuerto2)
 
 def bonoRequerimiento1(resultados):
     return model.bonoRequerimiento1(resultados)
