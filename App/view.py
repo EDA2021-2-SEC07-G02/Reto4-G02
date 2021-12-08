@@ -194,6 +194,26 @@ def printEscogerCiudad(tipoCiudad):
     return continuar,ciudadOrigen[1]
 
 
+def printAeropuertosR3(aeropuerto1,aeropuerto2):
+    print("*"*50)
+    print("El aeropuerto de origen será: ",aeropuerto1)
+    #Hacer pretty table
+    print("El aeropuerto de salida será: ",aeropuerto2)
+    print("*"*15+"RESULTADOS"+"*"*15)
+    pass
+
+def printRutaMasCorta(resultado):
+    distCorta=resultado[0]
+    ruta=resultado[1]
+    print("La distancia total es: "+str(distCorta))
+    print("La ruta es: ")
+    keys=["lineaA","vertexA","vertexB","weight"]
+    fieldNames=["Aerolínea","Origen","Destino","Distancia KM"]
+    maxWidth = {"Aerolínea":5,"Origen":10,"Destino":10,"Distancia KM":10}
+    printPrettyTable(ruta,keys,fieldNames,maxWidth,sample=lt.size(ruta),ultimas=False)
+
+
+
 
 def infoCargaCatalogo():
     print("\n"+"*"*50)
@@ -272,11 +292,16 @@ while True:
         #print(infoOrigen)
         if infoOrigen[0]:
             infoSalida=printEscogerCiudad("Destino")
-            #print(infoSalida)
-            aeropuerto1=infoOrigen[1]
-            aeropuerto2=infoSalida[1]
-            #print(aeropuerto1,aeropuerto2)
-            resultado=controller.caminoCorto(catalog,aeropuerto1,aeropuerto2)
+            if infoSalida[0]:
+                #print(infoSalida)
+                aeropuerto1=infoOrigen[1]
+                aeropuerto2=infoSalida[1]
+                printAeropuertosR3(aeropuerto1,aeropuerto2)
+                #print(aeropuerto1,aeropuerto2)
+                resultado=controller.caminoCorto(catalog,aeropuerto1,aeropuerto2)
+                printRutaMasCorta(resultado)
+            else:
+                print("Error en el nombre")
         else:
             print("Error en el nombre")
             pass #SE SIGUE IMPLEMENTANDO EL REQ3, Con info origen y infosalida se saben con precisión la info de ambas ciudades

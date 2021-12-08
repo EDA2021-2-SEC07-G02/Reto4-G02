@@ -97,6 +97,7 @@ def initCatalog():
 def addCity(catalog,ciudad):
     """
     Añade una ciudad a la tabla de simbolos de ciudades
+    Se comprueba si la ciudad es homónima
     """
     cityAscii=ciudad["city_ascii"]
     keyCity=(cityAscii).strip()
@@ -105,7 +106,12 @@ def addCity(catalog,ciudad):
         city=mp.get(catalog["CiudadesTabla"],keyCity)["value"]  #["ListaCiudades"]
         lt.addLast(city["ListaCiudades"],ciudad)
         city["Homonima"]=True
+        if city["NHom"]==0:
+            first=lt.firstElement(city["ListaCiudades"])
+            mp.put(catalog["CiudadesHomonimasTabla"],identificadorHom(first),cityHom(first))
+            city["NHom"]+=1
         mp.put(catalog["CiudadesHomonimasTabla"],identificadorHom(ciudad),cityHom(ciudad))
+        city["NHom"]+=1
 
     else:
         mp.put(catalog["CiudadesTabla"],cityAscii,cityDict(ciudad))
@@ -123,13 +129,17 @@ def cityDict(ciudad):
     dictValue={"ListaCiudades":None,
                 "AeropuertoCercano":None,
                 "Homonima":False,
-                "ListaAeropuertos":None}
+                "ListaAeropuertos":None,
+                "NHom":0}
     dictValue["ListaCiudades"]=lt.newList(datastructure="ARRAY_LIST")
     dictValue["ListaAeropuertos"]=lt.newList(datastructure="ARRAY_LIST")
-    lt.addLast(dictValue["ListaCiudades"],formatCiudad(ciudad))
+    lt.addLast(dictValue["ListaCiudades"],formatLatLng(ciudad))
     return dictValue
 
-def formatCiudad(ciudad):
+def formatLatLng(ciudad):
+    """
+    Se formatea las coordenadas de una ciudad (str -> float)
+    """
     ciudad['lat']=float(ciudad['lat'])
     ciudad['lng']=float(ciudad['lng'])
     return ciudad
@@ -139,8 +149,9 @@ def cityHom(ciudad):
     Value tabla de símbolos de CiudadesHomonimas Tabla
     """
     dictValue={"AeropuertoCercano": None,
-                "Latitud":ciudad["lat"],
-                "Longitud":ciudad["lng"]}
+                "Distancia":0,
+                "Latitud":float(ciudad["lat"]),
+                "Longitud":float(ciudad["lng"])}
     return dictValue
 
 def addAeropuerto(catalog,aeropuerto): #Nota: en el archivo no hay aeropuertos repetidos
@@ -158,17 +169,35 @@ def addAeropuerto(catalog,aeropuerto): #Nota: en el archivo no hay aeropuertos r
     addAeropuertoCity(catalog,aeropuerto)
 
 def addAeropuertoCity(catalog,aeropuerto):
+    """
+    Relaciona un aeropuerto con una ciudad.
+    Se agregan llaves a las tablas de simbolos correspondientes para
+    conocer el aeropuerto más cercano a una ciudad.
+    Para calcular distancia, se usan las coordenadas de los
+    aeropuertos y de las ciudades.
+    """
     IATA=aeropuerto["IATA"]
     cityAeropuerto=aeropuerto["City"]
     if mp.contains(catalog["CiudadesTabla"],cityAeropuerto):
-        
+        latAeropuerto=float(aeropuerto["Latitude"])
+        longAeropuerto=float(aeropuerto["Longitude"])
         city=mp.get(catalog["CiudadesTabla"],cityAeropuerto)["value"]
         if city["Homonima"]:
-            pass #COMPLETAR QUE PASA SI ES HOMONIMA
+            listaCities=city["ListaCiudades"] #1. Se obtienen todas las ciudades con ese mismo nombre
+            cityMasCercana=lt.getElement(listaCities,lt.size(listaCities)) #2. Ciudad por defecto más cercana, se toma la última pos para tomar coordenadas para la distancia por defecto
+            distMin=haversine(float(cityMasCercana["lng"]),float(cityMasCercana["lat"]),longAeropuerto,latAeropuerto)
+            for city in lt.iterator(listaCities):#3. Iteraré por todas las ciudades con ese nombre y encontraré la que esté más cerca al aeropuerto
+                cityHom=mp.get(catalog["CiudadesHomonimasTabla"],identificadorHom(city))["value"]  
+
+                distActual=haversine(cityHom["Longitud"],cityHom["Latitud"],longAeropuerto,latAeropuerto)
+                if distActual<distMin:
+                    cityHom["AeropuertoCercano"]=IATA #Agrego la info
+                    cityHom["Distancia"]=distActual
+                    distMin=distActual
+
         else:
             lt.addLast(city["ListaAeropuertos"],IATA)
-            latAeropuerto=float(aeropuerto["Latitude"])
-            longAeropuerto=float(aeropuerto["Longitude"])
+            
             latCity=city["ListaCiudades"]['elements'][0]["lat"]
             longCity=city["ListaCiudades"]['elements'][0]["lng"]
             distancia=haversine(longCity,latCity,longAeropuerto,latAeropuerto)
@@ -416,7 +445,7 @@ def buscarCiudad(catalog,ciudad):
     
     pos=1
     for ciudadHom in lt.iterator(ciudadLista): #Se agrega una llave para que el usuario pueda escoger la ciudad que desea
-        #la cantidad de ciudades máxima que se repiten son 17, por lo tanto esta operación es O(17) = O(K)
+        #la cantidad de ciudades máxima que se repiten son 17, por lo tanto el peor caso de esta operación es O(17) = O(K)
         ciudadHom["opcion"]=pos
         pos+=1
     return ciudadRepetida,ciudadLista
@@ -429,15 +458,18 @@ def coordenadasCiudad(catalog,ciudad,pos=1):
     ciudadLista=mp.get(catalog["CiudadesTabla"],ciudad)["value"]
     ciudadEscogida=lt.getElement(ciudadLista["ListaCiudades"],pos)
     if ciudadLista["Homonima"]: #COMPLETAR
-        pass
+        ciudadHom=mp.get(catalog["CiudadesHomonimasTabla"],identificadorHom(ciudadEscogida))["value"]
+        aeropuerto=ciudadHom["AeropuertoCercano"]
     else:
         aeropuerto= ciudadLista['AeropuertoCercano']['IATA']
-    # coordenadaLat=ciudadEscogida["lat"]
-    # coordenadaLng=ciudadEscogida["lng"]
     return ciudadEscogida,aeropuerto
 
 def caminoCorto(catalog,aeropuerto1,aeropuerto2):
     """
+    Se utiliza Dijkstra para conocer la distancia de una
+    ciudadA a una ciudadB. Para conocer que aeropuertos son
+    los más cercanos se utilizan funciones complementarias
+    que interactuan con el usuario
     """
     busqueda=djk.Dijkstra(catalog["AeropuertosRutasGraph"],aeropuerto1)
     
@@ -447,20 +479,23 @@ def caminoCorto(catalog,aeropuerto1,aeropuerto2):
     #print(busqueda)
     else:
         distCorta=0
-        ruta="NO HAY"
-    print(ruta)
+        ruta=lt.newList()
+        lt.addLast(ruta,{'vertexA': 'NO EXISTE', 'vertexB': 'NO EXISTE', 'weight': -1000, 'lineaA': 'N/A'})
     return distCorta,ruta
 
 
 
+# -----------------------------------------------------------
+# Función extra para calcular la distancia real entre dos coordenadas
+# -----------------------------------------------------------
 def haversine(lon1, lat1, lon2, lat2):
     """
     Esta función se utiliza para hacer los arcos del 
     grafo de ciudades
 
-    #CÓDIGO DE: @Michael Dunn
-    #https://stackoverflow.com/questions/4913349/haversine-formula-
-    # in-python-bearing-and-distance-between-two-gps-points
+    CÓDIGO DE: @Michael Dunn
+    https://stackoverflow.com/questions/4913349/haversine-formula-
+     in-python-bearing-and-distance-between-two-gps-points
     _________
     Calculate the great circle distance in kilometers between two points 
     on the earth (specified in decimal degrees)
@@ -476,9 +511,6 @@ def haversine(lon1, lat1, lon2, lat2):
     r = 6371 # Radius of earth in kilometers. Use 3956 for miles. Determines return value units.
     return c * r
 
-# Funciones para creacion de datos
-
-# Funciones de consulta
 
 # -----------------------------------------------------------
 # Controller para ver primer y último item cargado
@@ -571,6 +603,7 @@ def infoGrafo(analyzer,nombreGrafo):
 # BONO GRÁFICAS
 # -----------------------------------------------------------   
 
+# --------REQ1--------------
 def bonoRequerimiento1(resultado):
     mapgraf=folium.Map(location=[0,0],zoom_start=1) #Se crea el mapa
     puestoAeropuerto=1
@@ -592,6 +625,7 @@ def bonoRequerimiento1(resultado):
 
     return mapgraf
 
+# --------REQ2--------------
 def bonoRequerimiento2(catalog,resultado):
     mapgraf=folium.Map(location=[0,0],zoom_start=1) #Se crea el mapa
     infoGraf=masInfoGraf(catalog,resultado) #return info1,info2,componentesInfo1,componentesInfo2
@@ -602,17 +636,7 @@ def bonoRequerimiento2(catalog,resultado):
 
 def markersReq2(mapgraf, componente,infon,colorComponente, colorIATA):
     IATAn=infon["IATA"]
-    #-> Limpiar código después
-    # for aeropuerto in componente:
-    #     toolTip="Componentes del aeropuerto: "+IATAn
-    #     latitud=aeropuerto["Latitude"]
-    #     longitud=aeropuerto["Longitude"]
-    #     IATA=aeropuerto["IATA"]
-    #     infoPorIata=str("<br><b>"+str(toolTip)+ "</b>"
-    #                     +"<br><b>Código IATA </b>"+IATA)
-    #     (folium.Marker(location=[latitud, longitud], popup=folium.Popup(infoPorIata, parse_html=False),
-    #                     icon=folium.Icon(color=colorComponente),tooltip=toolTip)).add_to(mapgraf)
-    
+
     (folium.Marker(location=[infon["Latitude"], infon["Longitude"]], 
                     popup=folium.Popup(str("<br><b> AEROPUERTO: "+IATAn+ "</b>"+
                     " <br><b> Componentes conectados:  #"+str(componente["value"])+ "</b>"), parse_html=False),
@@ -631,16 +655,7 @@ def masInfoGraf(catalog,resultado):
     componentesInfo2=componentes2#infoAeropuertos(catalog,componentes2)
     return info1,info2,componentesInfo1,componentesInfo2
 
-# def infoAeropuertos(catalog,lista):
-#     """
-#     Devuelve la información de todos los códigos IATA en una lista
-#     """
-#     infoLista=lt.newList("ARRAY_LIST")
-#     for aeropuerto in lista:
-#         elemento=mp.get(catalog["AeropuertosTabla"],aeropuerto)
-#         lt.addLast(infoLista,elemento)
-#     return infoAeropuertos
-
+# --------REQ3--------------
 # -----------------------------------------------------------
 # Funciones complementarias y editadas de la DISClib para árboles
 # -----------------------------------------------------------
