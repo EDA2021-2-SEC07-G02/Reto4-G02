@@ -28,13 +28,14 @@
 from DISClib.DataStructures.arraylist import addLast
 import config as cf
 import folium
-from DISClib.ADT.graph import gr
+from DISClib.ADT.graph import gr, outdegree
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as mp
 from DISClib.DataStructures import mapentry as me
 from DISClib.ADT import orderedmap as om
 from DISClib.Algorithms.Graphs import scc
 from DISClib.Algorithms.Graphs import dijsktra as djk
+from DISClib.Algorithms.Graphs import prim
 from DISClib.Algorithms.Trees import traversal as traversal
 from DISClib.Utils import error as error
 from math import radians, cos, sin, asin, sqrt
@@ -483,7 +484,37 @@ def caminoCorto(catalog,aeropuerto1,aeropuerto2):
         lt.addLast(ruta,{'vertexA': 'NO EXISTE', 'vertexB': 'NO EXISTE', 'weight': -1000, 'lineaA': 'N/A'})
     return distCorta,ruta
 
+# --------REQ4--------------
+def mstMillasViajero(catalog,millas=1985,aeropuertoOrigen="LIS"): #-> Completar
+    primMST=prim.PrimMST(catalog["AeropuertosRutasDoblesGraph"])
+    posiblesAeropuertos=mp.size(primMST["marked"]) #No es así
+    pesoTotal=prim.weightMST(catalog["AeropuertosRutasDoblesGraph"],primMST)
+    caminosOr=prim.prim(catalog["AeropuertosRutasDoblesGraph"],primMST,aeropuertoOrigen)
+    return posiblesAeropuertos,pesoTotal
 
+# --------REQ5--------------
+def efectoSuspension(catalog,aeropuerto):
+    adyacentesAfectados=gr.adjacents(catalog["AeropuertosRutasGraph"],aeropuerto)
+    dirigido=mp.get(catalog["AeropuertosTabla"],aeropuerto)["value"]["connections"]
+    nodirigido=lt.size(gr.adjacents(catalog["AeropuertosRutasDoblesGraph"],aeropuerto))
+    respuestaLista=lt.newList("ARRAY_LIST")
+    for aeropuertoAfectado in lt.iterator(adyacentesAfectados):
+        info=mp.get(catalog["AeropuertosTabla"],aeropuertoAfectado)["value"]
+        lt.addLast(respuestaLista,info)
+    print(dirigido,nodirigido)
+    return respuestaLista,dirigido,nodirigido
+
+def infoPorGrafoDirigido(catalog,nombregrafo,aeropuerto):
+    aeropuetosSalida=gr.outdegree(catalog[nombregrafo],aeropuerto)
+    aeropuetosLlegada=gr.indegree(catalog[nombregrafo],aeropuerto)
+    adyacentes=gr.adjacents(catalog[nombregrafo],aeropuerto)
+    afectados=mp.get(catalog["AeropuertosTabla"],aeropuerto)["value"]["connections"]#aeropuetosSalida+aeropuetosLlegada
+    return adyacentes,afectados
+
+def infoPorGrafoNoDirigido(catalog,nombregrafo,aeropuerto):
+    adyacentes=gr.adjacents(catalog[nombregrafo],aeropuerto)
+    afectados=lt.size(adyacentes)
+    return adyacentes,afectados
 
 # -----------------------------------------------------------
 # Función extra para calcular la distancia real entre dos coordenadas
@@ -615,7 +646,7 @@ def bonoRequerimiento1(resultado):
         ciudadPais=aeropuerto["City"] +", "+aeropuerto["Country"]
         nAeropuerto="Place #"+str(puestoAeropuerto) + " - " + IATA
         infoPopUp=str("<br><b>"+nAeropuerto+ "&nbsp"+ "</b>"
-                            + "<br><b> #Conexiones: </b> "+conexiones
+                            + "<br><b> #Conexiones: </b> "+str(conexiones)
                             + "<br><b> Código IATA: </b> "+IATA
                             + "<br><b> Ciudad, País: </b>"+ciudadPais)
         infoHTML=folium.Html(infoPopUp,script=True)

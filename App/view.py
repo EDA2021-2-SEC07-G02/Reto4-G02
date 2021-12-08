@@ -212,6 +212,29 @@ def printRutaMasCorta(resultado):
     maxWidth = {"Aerolínea":5,"Origen":10,"Destino":10,"Distancia KM":10}
     printPrettyTable(ruta,keys,fieldNames,maxWidth,sample=lt.size(ruta),ultimas=False)
 
+def printAeropuertosAfectados(resultado,aeropuerto):
+    print("*"*50)
+    print("Aeropuertos y rutas en grado dirigido ('AeropuertosRutasGraph')")
+    print("Número original de rutas de aeropuertos: ",catalog["AeropuertosRutasGraph"]['vertices']["size"],
+            "y rutas: ",catalog["AeropuertosRutasGraph"]['edges'])
+    print("*"*50)
+    print("Aeropuertos y rutas en grado no dirigido ('AeropuertosRutasDoblesGraph')")
+    print("Número original de rutas de aeropuertos: ",catalog["AeropuertosRutasDoblesGraph"]['vertices']["size"],
+            "y rutas: ",catalog["AeropuertosRutasDoblesGraph"]['edges'])
+    
+    print("\n\n"+"*"*15+"Rutas Aéreas después de la afectación........"+"*"*15)
+    respuestaLista,dirigido,nodirigido=resultado
+    print("*"*50)
+    print("Aeropuertos y rutas en grado dirigido ('AeropuertosRutasGraph')")
+    print("Número afectado de rutas de aeropuertos: ",catalog["AeropuertosRutasGraph"]['vertices']["size"],
+            "y rutas: ",catalog["AeropuertosRutasGraph"]['edges']-dirigido)
+    print("*"*50)
+    print("Aeropuertos y rutas en grado no dirigido ('AeropuertosRutasDoblesGraph')")
+    print("Número afectado de rutas de aeropuertos: ",catalog["AeropuertosRutasDoblesGraph"]['vertices']["size"],
+            "y rutas: ",catalog["AeropuertosRutasDoblesGraph"]['edges']-nodirigido)
+    print("En total hay ",lt.size(respuestaLista)," aeropuertos afectados con la remoción de ",aeropuerto)
+    print("Los aeropuertos afectados son los siguientes: ")
+    printAeropuertos(respuestaLista)
 
 
 
@@ -307,11 +330,15 @@ while True:
             pass #SE SIGUE IMPLEMENTANDO EL REQ3, Con info origen y infosalida se saben con precisión la info de ambas ciudades
 
     elif int(inputs[0]) == 4:
-        print("Por implementar......")
+        resultado=controller.mstMillasViajero(catalog)
+        print(resultado)
+        print("IMPLEMENTANDO......")
         pass
 
     elif int(inputs[0]) == 5:
-        print("Por implementar......")
+        aeropuertoCerrado="DXB" #input("Ingrese el nombre del aeropuerto afectado")
+        resultado=controller.efectoSuspension(catalog,aeropuertoCerrado)
+        printAeropuertosAfectados(resultado,aeropuertoCerrado)
         pass
 
     elif int(inputs[0]) == 6:
