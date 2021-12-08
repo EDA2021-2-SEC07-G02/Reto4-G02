@@ -191,7 +191,7 @@ def printEscogerCiudad(tipoCiudad):
         continuar=False
         ciudadOrigen=None
     
-    return continuar,ciudadOrigen[1]
+    return continuar,ciudadOrigen[1],ciudadOrigen[0]
 
 
 def printAeropuertosR3(aeropuerto1,aeropuerto2):
@@ -290,18 +290,18 @@ while True:
 
         info=controller.loadServices(catalog)
         infoCargaCatalogo()
-        primerosAeropuertosGrafos="FALTA HACER PRETTY TABLE"#info[1]
         ultimaCiudadCargada=info[2]
         aeropuerto=info[1]
         #el primer aeropuerto es cargado a ambos grafos debido a la implementación que hicimos del model
-        print("Primer aeropuerto cargado en ambos grafos: \n",primerosAeropuertosGrafos)
+        print("Aeropuerto aleatorio cargado en ambos grafos: \n")
         printAeropuertos(aeropuerto)
-        print("\nÚltima ciudad cargada a la tabla de simbolos: \n")
+        print("\n Ciudad aleatoria cargada a la tabla de simbolos: \n")
         printTablaCiudades(ultimaCiudadCargada)
 
     elif int(inputs[0]) == 1:
         resultado=controller.puntosInterconexion(catalog)
         printConexiones(resultado)
+        print(resultado)
         display(controller.bonoRequerimiento1(resultado))
         pass
 
@@ -329,7 +329,7 @@ while True:
                 print("Error en el nombre")
         else:
             print("Error en el nombre")
-            pass #SE SIGUE IMPLEMENTANDO EL REQ3, Con info origen y infosalida se saben con precisión la info de ambas ciudades
+            
 
     elif int(inputs[0]) == 4:
         resultado=controller.mstMillasViajero(catalog)
@@ -343,12 +343,19 @@ while True:
         printAeropuertosAfectados(resultado,aeropuertoCerrado)
         pass
 
-    elif int(inputs[0]) == 6:
-        print("Por implementar......")
-        pass
+    elif int(inputs[0]) == 6:     
+        ciudad1=input("Ingrese la ciudad de origen: ")
+        if infoOrigen[0]:
+            infoSalida=printEscogerCiudad("Destino")
+            if infoSalida[0]:
+                ciudad1=infoOrigen[2]
+                ciudad2=infoSalida[2]
+                resultado=controller.bonoAPI(ciudad1,ciudad2)
+                print(resultado)
+
 
     elif int(inputs[0]) == 7:
-        print("Por implementar......")
+        print("por implementar")
         pass
 
     else:

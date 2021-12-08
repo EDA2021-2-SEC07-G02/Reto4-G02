@@ -27,6 +27,7 @@
 
 from DISClib.DataStructures.arraylist import addLast
 import config as cf
+import os
 import folium
 from DISClib.ADT.graph import gr, outdegree
 from DISClib.ADT import list as lt
@@ -42,6 +43,7 @@ from DISClib.Algorithms.Graphs import dijsktra as djk
 from DISClib.Algorithms.Graphs import prim
 from DISClib.Algorithms.Trees import traversal as traversal
 from DISClib.Utils import error as error
+from amadeus import Client, ResponseError
 from math import radians, cos, sin, asin, sqrt
 assert cf
 
@@ -515,18 +517,6 @@ def efectoSuspension(catalog,aeropuerto):
     print(dirigido,nodirigido)
     return respuestaLista,dirigido,nodirigido
 
-def infoPorGrafoDirigido(catalog,nombregrafo,aeropuerto):
-    aeropuetosSalida=gr.outdegree(catalog[nombregrafo],aeropuerto)
-    aeropuetosLlegada=gr.indegree(catalog[nombregrafo],aeropuerto)
-    adyacentes=gr.adjacents(catalog[nombregrafo],aeropuerto)
-    afectados=mp.get(catalog["AeropuertosTabla"],aeropuerto)["value"]["connections"]#aeropuetosSalida+aeropuetosLlegada
-    return adyacentes,afectados
-
-def infoPorGrafoNoDirigido(catalog,nombregrafo,aeropuerto):
-    adyacentes=gr.adjacents(catalog[nombregrafo],aeropuerto)
-    afectados=lt.size(adyacentes)
-    return adyacentes,afectados
-
 # -----------------------------------------------------------
 # Función extra para calcular la distancia real entre dos coordenadas
 # -----------------------------------------------------------
@@ -669,8 +659,10 @@ def bonoRequerimiento1(resultado):
 
 # --------REQ2--------------
 def bonoRequerimiento2(catalog,resultado):
+    #print(resultado)
     mapgraf=folium.Map(location=[0,0],zoom_start=1) #Se crea el mapa
-    infoGraf=masInfoGraf(catalog,resultado) #return info1,info2,componentesInfo1,componentesInfo2
+    scc=resultado[2]["marked"]
+    infoGraf=masInfoGraf(catalog,resultado,scc) #return info1,info2,componentesInfo1,componentesInfo2
     info1,info2,componentesInfo1,componentesInfo2=infoGraf
     markersReq2(mapgraf,componentesInfo1,info1, "darkblue","lightblue")
     markersReq2(mapgraf,componentesInfo2,info2,"darkgreen","lightgreen")
@@ -685,7 +677,7 @@ def markersReq2(mapgraf, componente,infon,colorComponente, colorIATA):
                         icon=folium.Icon(color=colorIATA),tooltip=str("!!!AEROPUERTO ESCOGIDO:"+IATAn))).add_to(mapgraf)
     return mapgraf
 
-def masInfoGraf(catalog,resultado):
+def masInfoGraf(catalog,resultado,scc):
     sccClusters=resultado[2]
     aeropuerto1=resultado[3]
     aeropuerto2=resultado[4]
@@ -700,9 +692,48 @@ def masInfoGraf(catalog,resultado):
     #print(recorrido)
     componentesInfo1=componentes1#infoAeropuertos(catalog,componentes1)
     componentesInfo2=componentes2#infoAeropuertos(catalog,componentes2)
+    #lineasArcos=infoSCC(catalog,scc)
     return info1,info2,componentesInfo1,componentesInfo2
 
+def infoSCC(catalog,SCC):
+    respuesta=lt.newList("ARRAY_LIST")
+    for arco in lt.iterator(SCC):
+        aeropuertoInfo=mp.get(catalog["AeropuertosTabla"],arco)
+        lt.addLast(respuesta,aeropuertoInfo)
+    print(respuesta)
+
 # --------REQ3--------------
+
+# -----------------------------------------------------------
+# BONO API
+# -----------------------------------------------------------   
+
+def bonoAPI(ciudad1,ciudad2):
+    print(os.getenv('AMADEUS_CLIENT_ID'))
+    amadeus = Client(client_id=os.getenv('AMADEUS_CLIENT_ID'),
+                    client_secret=os.getenv('AMADEUS_CLIENT_SECRET'))
+
+    try:
+        '''
+        What relevant airports are there around a specific location?
+        '''
+        response = amadeus.reference_data.locations.airports.get(longitude=49.000, latitude=2.55)
+        print(response.data)
+        lat1=ciudad1["lat"]
+        lng1=ciudad1["lng"]
+        lat2=ciudad2["lat"]
+        lng2=ciudad2["lng"]
+        respuestaCiudad1=(amadeus.reference_data.locations.airports.get(latitude=lat1,longitude=lng1).data)[0]
+        respuestaCiudad2=(amadeus.reference_data.locations.airports.get(latitude=lat2,longitude=lng2).data)[0]
+        IATA1=respuestaCiudad1["iataCode"]
+        IATA2=respuestaCiudad2["iataCode"] #código IATA
+        distancia1=respuestaCiudad1["distance"]["value"] #distancia entre el aeropuerto y la coordenada
+        distancia2=respuestaCiudad1["distance"]["value"]
+        return IATA1,IATA2,distancia1,distancia2
+    except ResponseError as error:
+        raise error
+
+
 # -----------------------------------------------------------
 # Funciones complementarias y editadas de la DISClib para árboles
 # -----------------------------------------------------------

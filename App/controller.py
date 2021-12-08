@@ -51,22 +51,16 @@ def loadServices(catalog):
     input_file_ciudades= csv.DictReader(open(archivo_ciudades, encoding="utf-8"),
                                 delimiter=",")
             
-    itemPrimeroB=None
-    for item in (input_file_ciudades):
-        itemPrimeroB=item
-        if itemPrimeroB is not None:
-            break
+    itemPrimeroB={"city": "-","capital":"-","lat":0,"lng":0,"country":"-"}
+
     for ciudad in input_file_ciudades:
         model.addCity(catalog,ciudad)
     
 
 
-    itemPrimeroA={"Name":"Charleston Air Force Base-International Airport",
-                    "City":"Charleston","Country":"United States","IATA":"CHS","Latitude":32.8986015, "Longitude":-80.040496}
-    # for item in (input_file_aeropuerts):
-    #     itemPrimeroA=item
-    #     if itemPrimeroA is not None:
-    #         break
+    itemPrimeroA={"Name":"-",
+                    "City":"-","Country":"-","IATA":"-","Latitude":0, "Longitude":0}
+
     for aeropuerto in input_file_aeropuerts:
             model.addAeropuerto(catalog,aeropuerto)
     
@@ -138,3 +132,6 @@ def bonoRequerimiento1(resultados):
 
 def bonoRequerimiento2(catalog,resultados):
     return model.bonoRequerimiento2(catalog,resultados)
+
+def bonoAPI(ciudad1,ciudad2):
+    return model.bonoAPI(ciudad1,ciudad2)
