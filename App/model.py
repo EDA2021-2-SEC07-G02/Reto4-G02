@@ -34,6 +34,10 @@ from DISClib.ADT import map as mp
 from DISClib.DataStructures import mapentry as me
 from DISClib.ADT import orderedmap as om
 from DISClib.Algorithms.Graphs import scc
+from DISClib.Algorithms.Graphs import dfo
+from DISClib.Algorithms.Graphs import bfs
+from DISClib.Algorithms.Graphs import dfs
+from DISClib.Algorithms.Graphs import cycles
 from DISClib.Algorithms.Graphs import dijsktra as djk
 from DISClib.Algorithms.Graphs import prim
 from DISClib.Algorithms.Trees import traversal as traversal
@@ -72,10 +76,6 @@ def initCatalog():
     catalog["CiudadesTabla"]=mp.newMap(numelements=37831, 
                                     maptype="CHAINING",
                                     loadfactor=4.0)
-    
-    catalog["CiudadesHomonimasTabla"]=mp.newMap(numelements=5000, 
-                                    maptype="PROBING",
-                                    loadfactor=0.5)
 
     #9075 aeropuertos, 37411 ciudades únicas
     catalog["AeropuertosTabla"]= mp.newMap(numelements=10061,
@@ -85,7 +85,9 @@ def initCatalog():
     catalog["NumeroConexionesArbol"]=om.newMap(omaptype='RBT',
                                    comparefunction=compareNConexiones)
 
-    catalog["RankingConexiones"]=lt.newList("ARRAY_LIST")              
+    catalog["RankingConexiones"]=lt.newList("ARRAY_LIST")
+
+    adicionKeysTablasGrafos(catalog)         
 
     return catalog
     
@@ -94,6 +96,18 @@ def initCatalog():
 # -----------------------------------------------------------
 # AGREGAR INFORMACIÓN AL CATÁLOGO
 # -----------------------------------------------------------
+def adicionKeysTablasGrafos(catalog):
+    """
+    Se añade una key a ambos grafos para saber cuantos aeropuertos
+    tienen por lo menos una ruta de conexión con otro aeropuerto
+    Así mismo se adiciona una key a la tabla haciendo referencia a
+    cuantas ciudades en total fueron cargadas, y el número de ciudades
+    que son homónimas
+    """
+    catalog["AeropuertosRutasGraph"]["AeropuertosConConexion"]=0
+    catalog["AeropuertosRutasDoblesGraph"]["AeropuertosConConexion"]=0
+    catalog["CiudadesTabla"]["TotalCiudadesCargadas"]=0
+    catalog["CiudadesTabla"]["CiudadesHom"]=0
 
 def addCity(catalog,ciudad):
     """
@@ -104,18 +118,12 @@ def addCity(catalog,ciudad):
     keyCity=(cityAscii).strip()
     existCity=mp.contains(catalog["CiudadesTabla"],keyCity)
     if existCity:
-        city=mp.get(catalog["CiudadesTabla"],keyCity)["value"]  #["ListaCiudades"]
-        lt.addLast(city["ListaCiudades"],ciudad)
-        city["Homonima"]=True
-        if city["NHom"]==0:
-            first=lt.firstElement(city["ListaCiudades"])
-            mp.put(catalog["CiudadesHomonimasTabla"],identificadorHom(first),cityHom(first))
-            city["NHom"]+=1
-        mp.put(catalog["CiudadesHomonimasTabla"],identificadorHom(ciudad),cityHom(ciudad))
-        city["NHom"]+=1
+        cityMap=mp.get(catalog["CiudadesTabla"],keyCity)["value"]  #["ListaCiudades"]
+        cityHom(catalog,ciudad,cityMap)
 
     else:
         mp.put(catalog["CiudadesTabla"],cityAscii,cityDict(ciudad))
+    catalog["CiudadesTabla"]["TotalCiudadesCargadas"]+=1
         
 def identificadorHom(ciudad):
     """
@@ -127,14 +135,15 @@ def cityDict(ciudad):
     """
     Value tabla de símbolos de CiudadesTabla
     """
+    aeropuertoCercanoKey(ciudad)
     dictValue={"ListaCiudades":None,
-                "AeropuertoCercano":None,
+                "AeropuertoCercano":None, #BORRAR
                 "Homonima":False,
                 "ListaAeropuertos":None,
                 "NHom":0}
     dictValue["ListaCiudades"]=lt.newList(datastructure="ARRAY_LIST")
     dictValue["ListaAeropuertos"]=lt.newList(datastructure="ARRAY_LIST")
-    lt.addLast(dictValue["ListaCiudades"],formatLatLng(ciudad))
+    lt.addLast(dictValue["ListaCiudades"],ciudad)
     return dictValue
 
 def formatLatLng(ciudad):
@@ -145,15 +154,25 @@ def formatLatLng(ciudad):
     ciudad['lng']=float(ciudad['lng'])
     return ciudad
 
-def cityHom(ciudad):
+def cityHom(catalog,ciudad,cityMap):
     """
     Value tabla de símbolos de CiudadesHomonimas Tabla
     """
-    dictValue={"AeropuertoCercano": None,
-                "Distancia":0,
-                "Latitud":float(ciudad["lat"]),
-                "Longitud":float(ciudad["lng"])}
-    return dictValue
+    lt.addLast(cityMap["ListaCiudades"],aeropuertoCercanoKey(ciudad))
+    cityMap["Homonima"]=True
+    if cityMap["NHom"]==0:
+        catalog["CiudadesTabla"]["CiudadesHom"]+=1
+        cityMap["NHom"]+=1
+    
+    cityMap["NHom"]+=1
+    catalog["CiudadesTabla"]["CiudadesHom"]+=1
+
+    return ciudad
+
+def aeropuertoCercanoKey(ciudad):
+    ciudad["AeropuertoCercano"]={"IATA": None, "Distancia": -100}
+    formatLatLng(ciudad)
+    return ciudad
 
 def addAeropuerto(catalog,aeropuerto): #Nota: en el archivo no hay aeropuertos repetidos
     """
@@ -183,33 +202,47 @@ def addAeropuertoCity(catalog,aeropuerto):
         latAeropuerto=float(aeropuerto["Latitude"])
         longAeropuerto=float(aeropuerto["Longitude"])
         city=mp.get(catalog["CiudadesTabla"],cityAeropuerto)["value"]
+        lt.addLast(city["ListaAeropuertos"],IATA) #se añade el aeropuerto a la ciudad con ese nombre ÚNICO
         if city["Homonima"]:
             listaCities=city["ListaCiudades"] #1. Se obtienen todas las ciudades con ese mismo nombre
-            cityMasCercana=lt.getElement(listaCities,lt.size(listaCities)) #2. Ciudad por defecto más cercana, se toma la última pos para tomar coordenadas para la distancia por defecto
-            distMin=haversine(float(cityMasCercana["lng"]),float(cityMasCercana["lat"]),longAeropuerto,latAeropuerto)
-            for city in lt.iterator(listaCities):#3. Iteraré por todas las ciudades con ese nombre y encontraré la que esté más cerca al aeropuerto
-                cityHom=mp.get(catalog["CiudadesHomonimasTabla"],identificadorHom(city))["value"]  
-
-                distActual=haversine(cityHom["Longitud"],cityHom["Latitud"],longAeropuerto,latAeropuerto)
-                if distActual<distMin:
-                    cityHom["AeropuertoCercano"]=IATA #Agrego la info
-                    cityHom["Distancia"]=distActual
-                    distMin=distActual
+            for cityHom in lt.iterator(listaCities):
+                if cityHom["AeropuertoCercano"]["IATA"] is None:
+                    primerAeropuerto(cityHom,longAeropuerto,latAeropuerto,IATA) 
+                else:
+                    compararDistanciaEnCiudad(cityHom,longAeropuerto,latAeropuerto,IATA)
 
         else:
-            lt.addLast(city["ListaAeropuertos"],IATA)
+            citySinHom=lt.firstElement(city["ListaCiudades"])
             
-            latCity=city["ListaCiudades"]['elements'][0]["lat"]
-            longCity=city["ListaCiudades"]['elements'][0]["lng"]
-            distancia=haversine(longCity,latCity,longAeropuerto,latAeropuerto)
-            if city["AeropuertoCercano"] is None:
-                city["AeropuertoCercano"]={"IATA":IATA,
-                                            "Distancia":distancia}  #se pone como aeropuerto cercano al primer aeropuerto que haya sido añadido
+            if citySinHom["AeropuertoCercano"]["IATA"]  is None:
+                primerAeropuerto(citySinHom,longAeropuerto,latAeropuerto,IATA) #se pone como aeropuerto cercano al primer aeropuerto que haya sido añadido
             else:
-                if distancia<city["AeropuertoCercano"]["Distancia"]: #Se compara cual es el aeropuerto más cercano
-                    city["AeropuertoCercano"]["IATA"]=IATA
+                compararDistanciaEnCiudad(citySinHom,longAeropuerto,latAeropuerto,IATA)
 
+def primerAeropuerto(city,longAeropuerto,latAeropuerto,IATA):
+    """
+    Si la ciudad aún no tiene aeropuerto cercano se agrega
+    el aeropuerto actual
+    
+    Se cambiar esta key: 'AeropuertoCercano': {'IATA': None, 'Distancia': -100}}
+    """
+    latCity=city["lat"]
+    longCity=city["lng"]
+    distancia=haversine(longCity,latCity,longAeropuerto,latAeropuerto)
+    city["AeropuertoCercano"]["IATA"]=IATA
+    city["AeropuertoCercano"][ "Distancia"]=distancia
 
+def compararDistanciaEnCiudad(city,longAeropuerto,latAeropuerto,IATA):
+    """
+    Se comparan las distancias entre el aeropuerto actual de la ciudad vs
+    el aeropuerto que se intenta agregar
+    """
+    latCity=city["lat"]
+    longCity=city["lng"]
+    distancia=haversine(longCity,latCity,longAeropuerto,latAeropuerto)
+    if distancia<city["AeropuertoCercano"]["Distancia"]: #Se compara cual es el aeropuerto más cercano, si el aeropuerto actual o el pasado
+        city["AeropuertoCercano"]["IATA"]=IATA
+        city["AeropuertoCercano"][ "Distancia"]=distancia
 
 
 def addAeropuertoGraf(catalog, vertice,nombreGrafo): #añade un aeropuerto como vértice
@@ -223,13 +256,6 @@ def addAeropuertoGraf(catalog, vertice,nombreGrafo): #añade un aeropuerto como 
     except Exception as exp:
         error.reraise(exp, 'model: ERROR No se puede añadir el vértice')
 
-def numeroAeropuertosConectados(catalog):
-    """
-    Se añade una key a ambos grafos para saber cuantos aeropuertos
-    tienen por lo menos una ruta de conexión con otro aeropuerto
-    """
-    catalog["AeropuertosRutasGraph"]["AeropuertosConConexion"]=0
-    catalog["AeropuertosRutasDoblesGraph"]["AeropuertosConConexion"]=0
 
 
 # -----------------------------------------------------------
@@ -288,7 +314,6 @@ def addRutasNoDirigido(catalog):
     Vértices -> TODOS los aeropuertos que hay en el archivo de airports
     Arcos -> Rutas que funcionen en ambas direcciones a->b y b->a
     """
-    numeroAeropuertosConectados(catalog)
     listaAeropuertos=gr.vertices(catalog["AeropuertosRutasGraph"])
     for aeropuertoSalida in lt.iterator(listaAeropuertos): #recorro todos los vértices del grafo
         conectado=agregarAeropuertosConConexiones(catalog,aeropuertoSalida) #compruebo si el aeropuerto tiene conexiones o no
@@ -345,26 +370,6 @@ def arbolNConexiones(catalog):
     catalog["RankingConexiones"]=inorderRanking(catalog['NumeroConexionesArbol'])
     print("TAMAÑO ÁRBOL: ", om.size(catalog['NumeroConexionesArbol']))
 
-def grafoCiudadesAeropuerto():
-    """
-    Este grafo funcionará para conocer la conexión entre 
-    ciudades.
-
-    Los identificadores de los vértices serán:
-         " idciudad - IATA (aeropuerto)"
-    Los arcos de las conexiones tendrán como peso la distancia
-    calculada con la fórmula de haversine
-
-    El grafo es dirigido
-    """
-    pass
-
-def identificadorCiudadAeropuerto(aeropuerto,ciudad):
-    """
-    Nombre del vertex
-    """
-
-    return aeropuerto + " - " + ciudad
 
 # -----------------------------------------------------------
 # REQUERIMIENTOS
@@ -390,6 +395,8 @@ def puntosInterconexion(catalog,sample=5):
             if lt.size(listaRespuesta)>=sample:
                 break
         i-=1
+    print(mp.get(catalog["CiudadesTabla"],"Springfield"))
+    print(mp.get(catalog["CiudadesTabla"],"Lisbon"))
     return listaRespuesta
 
 
@@ -458,12 +465,9 @@ def coordenadasCiudad(catalog,ciudad,pos=1):
     """
     ciudadLista=mp.get(catalog["CiudadesTabla"],ciudad)["value"]
     ciudadEscogida=lt.getElement(ciudadLista["ListaCiudades"],pos)
-    if ciudadLista["Homonima"]: #COMPLETAR
-        ciudadHom=mp.get(catalog["CiudadesHomonimasTabla"],identificadorHom(ciudadEscogida))["value"]
-        aeropuerto=ciudadHom["AeropuertoCercano"]
-    else:
-        aeropuerto= ciudadLista['AeropuertoCercano']['IATA']
-    return ciudadEscogida,aeropuerto
+    aeropuerto=ciudadEscogida["AeropuertoCercano"]["IATA"]
+    distanciaAeropuertoCiudad=ciudadEscogida["AeropuertoCercano"]["Distancia"]
+    return ciudadEscogida,aeropuerto,distanciaAeropuertoCiudad
 
 def caminoCorto(catalog,aeropuerto1,aeropuerto2):
     """
@@ -486,6 +490,13 @@ def caminoCorto(catalog,aeropuerto1,aeropuerto2):
 
 # --------REQ4--------------
 def mstMillasViajero(catalog,millas=1985,aeropuertoOrigen="LIS"): #-> Completar
+    """
+    #TODO
+    Para conocer que los aeropuertos más cercanos
+    se utilizan funciones complementarias que interactuan con el usuario 
+    La entreada del requerimiento es el aeropuerto de origen (ya encontrado
+    acorde a la ciudad) y las millas que posee el usuario
+    """
     primMST=prim.PrimMST(catalog["AeropuertosRutasDoblesGraph"])
     posiblesAeropuertos=mp.size(primMST["marked"]) #No es así
     pesoTotal=prim.weightMST(catalog["AeropuertosRutasDoblesGraph"],primMST)
@@ -682,6 +693,11 @@ def masInfoGraf(catalog,resultado):
     info2=mp.get(catalog["AeropuertosTabla"],aeropuerto2)["value"]
     componentes1= mp.get(sccClusters['idscc'], aeropuerto1)
     componentes2=mp.get(sccClusters['idscc'], aeropuerto2)
+    # recorrido=bfs.BreadhtFisrtSearch(catalog["AeropuertosRutasGraph"],aeropuerto1)
+    #recorrido=dfo.dfsVertex(catalog["AeropuertosRutasGraph"],dfo.DepthFirstOrder(catalog["AeropuertosRutasGraph"]),aeropuerto1)
+    #recorrido=dfs.DepthFirstSearch(catalog["AeropuertosRutasGraph"],aeropuerto1)
+    #recorrido=cycles.dfs(catalog["AeropuertosRutasGraph"],cycles.DirectedCycle(catalog["AeropuertosRutasGraph"]),aeropuerto1)
+    #print(recorrido)
     componentesInfo1=componentes1#infoAeropuertos(catalog,componentes1)
     componentesInfo2=componentes2#infoAeropuertos(catalog,componentes2)
     return info1,info2,componentesInfo1,componentesInfo2

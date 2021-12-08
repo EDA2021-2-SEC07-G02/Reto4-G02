@@ -61,11 +61,12 @@ def loadServices(catalog):
     
 
 
-    itemPrimeroA=None
-    for item in (input_file_aeropuerts):
-        itemPrimeroA=item
-        if itemPrimeroA is not None:
-            break
+    itemPrimeroA={"Name":"Charleston Air Force Base-International Airport",
+                    "City":"Charleston","Country":"United States","IATA":"CHS","Latitude":32.8986015, "Longitude":-80.040496}
+    # for item in (input_file_aeropuerts):
+    #     itemPrimeroA=item
+    #     if itemPrimeroA is not None:
+    #         break
     for aeropuerto in input_file_aeropuerts:
             model.addAeropuerto(catalog,aeropuerto)
     

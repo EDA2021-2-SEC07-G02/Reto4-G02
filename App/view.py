@@ -242,7 +242,9 @@ def infoCargaCatalogo():
     print("\n"+"*"*50)
 
     print("*"*10+"Información mapas"+"*"*10)
+    print("Total de ciudades cargadas: ",catalog["CiudadesTabla"]["TotalCiudadesCargadas"])
     print("Total de ciudades con nombre único: ",catalog["CiudadesTabla"]["size"])
+    print("Total de ciudades homónimas: ",catalog["CiudadesTabla"]["CiudadesHom"])
     print("Tamaño de mapa AeropuertosTabla: ",catalog["AeropuertosTabla"]["size"])
 
     print("*"*10+"Información grafos:"+"*"*10)
