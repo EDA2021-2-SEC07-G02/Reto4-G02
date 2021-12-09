@@ -202,6 +202,29 @@ def printAeropuertosR3(aeropuerto1,aeropuerto2):
     print("*"*15+"RESULTADOS"+"*"*15)
     pass
 
+# PRINT REQ 4
+
+def printMstMillasViajero(res,millas_usuario):
+    res_simple, millas_simple, ret, millas_cam, info = res
+    print("Información del aeropuerto de partida:")
+    kmUsuario=float(millas_usuario)*1.6
+    lista=lt.newList()
+    lt.addLast(lista,info)
+    printPrettyTable(lista,['IATA','Name','City','Country'],['IATA','Nombre','Ciudad','Pais'],{'IATA':10,'Name':30,'City':20,'Country':20})
+    print("\n\nDistancia de ruta más corta:",round(millas_cam,2))
+    print("Suma de distancia de todos los aeropuertos desde origne:",round(millas_simple,2))
+    print("Distancia en kilometros de millas:",round(kmUsuario,2))
+
+    print("\n\n----- Ruta con mayor cantidad de paradas -------")
+    printPrettyTable(ret,['lineaA','vertexA','vertexB','weight'],['Aerolinea','Origen','Destino','Distancia [km]'],{'lineaA':20,'vertexA':20,'vertexB':20,'weight':20},sample=lt.size(ret))
+    print("El pasajero le quedan faltando (-) o sobrando (+)) millas",round((kmUsuario-millas_cam)/2,2),"millas para completar el viaje")
+
+    print("\n\n----- Ruta propuesta enunciado -------")
+    printPrettyTable(res_simple,['lineaA','vertexA','vertexB','weight'],['Aerolinea','Origen','Destino','Distancia [km]'],{'lineaA':20,'vertexA':20,'vertexB':20,'weight':20},sample=lt.size(res_simple))
+    print("El pasajero le quedan faltando (-) o sobrando (+)) millas",round((kmUsuario-millas_simple)/1.6,2),"millas para completar el viaje")
+    
+    print
+
 def printRutaMasCorta(resultado):
     distCorta=resultado[0]
     ruta=resultado[1]
@@ -332,10 +355,12 @@ while True:
             
 
     elif int(inputs[0]) == 4:
-        resultado=controller.mstMillasViajero(catalog)
-        print(resultado)
-        print("IMPLEMENTANDO......")
-        pass
+
+        
+        millas_usuario = input("Ingrese millas de usuario: ")
+        aeropuerto = input("Ingrese código IATA aeropuerto: ")
+        resultado=controller.mstMillasViajero(catalog, millas_usuario, aeropuerto)
+        printMstMillasViajero(resultado,millas_usuario)
 
     elif int(inputs[0]) == 5:
         aeropuertoCerrado="DXB" #input("Ingrese el nombre del aeropuerto afectado")

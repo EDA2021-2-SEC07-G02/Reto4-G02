@@ -121,8 +121,8 @@ def clustersTrafico(catalog,aeropuerto1,aeropuerto2):
 def caminoCorto(catalog,aeropuerto1,aeropuerto2):
     return model.caminoCorto(catalog,aeropuerto1,aeropuerto2)
 
-def mstMillasViajero(catalog):
-    return model.mstMillasViajero(catalog)
+def mstMillasViajero(catalog,millas,aeropuerto):
+    return model.mstMillasViajero(catalog,millas,aeropuerto)
 
 def efectoSuspension(catalog,aeropuerto):
     return model.efectoSuspension(catalog,aeropuerto)

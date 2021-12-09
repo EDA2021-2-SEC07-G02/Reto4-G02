@@ -41,9 +41,10 @@ from DISClib.Algorithms.Graphs import dfs
 from DISClib.Algorithms.Graphs import cycles
 from DISClib.Algorithms.Graphs import dijsktra as djk
 from DISClib.Algorithms.Graphs import prim
+from DISClib.ADT import queue as q
 from DISClib.Algorithms.Trees import traversal as traversal
 from DISClib.Utils import error as error
-from amadeus import Client, ResponseError
+#from amadeus import Client, ResponseError
 from math import radians, cos, sin, asin, sqrt
 assert cf
 
@@ -492,18 +493,94 @@ def caminoCorto(catalog,aeropuerto1,aeropuerto2):
 
 # --------REQ4--------------
 def mstMillasViajero(catalog,millas=1985,aeropuertoOrigen="LIS"): #-> Completar
+    mst = lt.newList("ARRAY_LIST")
+    res = lt.newList("ARRAY_LIST")
+    
+    info=mp.get(catalog['AeropuertosTabla'],aeropuertoOrigen)['value']
+    search = prim.initSearch(catalog["AeropuertosRutasDoblesGraph"])
+    primMST=prim.prim(catalog["AeropuertosRutasDoblesGraph"],search,aeropuertoOrigen)
+    mst,ver_fin=edgesMSTeditada(catalog["AeropuertosRutasDoblesGraph"],primMST)
+
+    
+
+    for ver in lt.iterator(ver_fin):
+        camino = lt.newList()
+        e = mp.get(mst,ver)
+        lt.addFirst(camino,e["value"]["value"])
+        
+        verA_B = e["value"]["value"]["vertexA"]
+        hayCamino=True
+        while hayCamino:
+            if(mp.contains(mst,verA_B)):
+                e = mp.get(mst,verA_B)
+                lt.addFirst(camino,e["value"]["value"])
+
+               
+                verA_B = e["value"]["value"]["vertexA"]
+            else:
+                hayCamino=False
+        lt.addLast(res,camino)
+    
+    res_simple,millas_simple,ret,millas_cam=organizacionListas(res,mst)
+
+
+    return res_simple, millas_simple, ret, millas_cam, info
+
+def organizacionListas(res,mst):
+    mapa_verif = mp.newMap(numelements=mp.size(mst))
+    res_simple = lt.newList("ARRAY_LIST")
+    millas_simple = 0
+    maxi=0
+    ret=None
+    for cam in lt.iterator(res):
+        cont=0
+        millas=0
+        for edg in lt.iterator(cam):
+            verA=edg["vertexA"]
+            verB=edg["vertexB"]
+            millas+=edg["weight"]
+            if not(mp.contains(mapa_verif,verA+verB)):
+                mp.put(mapa_verif,verA+verB,"xd")
+                lt.addLast(res_simple,edg)
+                millas_simple+=edg["weight"]
+
+            cont+=1
+            
+            
+        if cont>maxi:
+            maxi=cont
+            ret=cam
+    return res_simple, millas_simple, ret, millas
+
+
+    
+def edgesMSTeditada(graph, search):
     """
-    #TODO
-    Para conocer que los aeropuertos más cercanos
-    se utilizan funciones complementarias que interactuan con el usuario 
-    La entreada del requerimiento es el aeropuerto de origen (ya encontrado
-    acorde a la ciudad) y las millas que posee el usuario
+    Args:
+        search: La estructura de busqueda
+        vertex: El vertice de destino
+    Returns:
+        Una pila con el camino entre source y vertex
+    Raises:
+        Exception
     """
-    primMST=prim.PrimMST(catalog["AeropuertosRutasDoblesGraph"])
-    posiblesAeropuertos=mp.size(primMST["marked"]) #No es así
-    pesoTotal=prim.weightMST(catalog["AeropuertosRutasDoblesGraph"],primMST)
-    caminosOr=prim.prim(catalog["AeropuertosRutasDoblesGraph"],primMST,aeropuertoOrigen)
-    return posiblesAeropuertos,pesoTotal
+    ver_fin_map = mp.newMap(numelements=mp.size(search['edgeTo']))
+    mst = mp.newMap(numelements=mp.size(search['edgeTo']))
+    try:
+        vertices = gr.vertices(graph)
+        for vert in lt.iterator(vertices):
+            e = mp.get(search['edgeTo'], vert)
+            if (e is not None):
+                q.enqueue(search['mst'], e['value'])
+                mp.put(mst,e["value"]["vertexB"],e)
+                mp.put(ver_fin_map,e["value"]["vertexB"],e["value"]["vertexB"])
+        for edge in lt.iterator(mp.valueSet(mst)):
+                if mp.contains(ver_fin_map,edge["value"]["vertexA"]):
+                    mp.remove(ver_fin_map,edge["value"]["vertexA"])
+        return mst, mp.valueSet(ver_fin_map)
+    except Exception as exp:
+        error.reraise(exp, 'bellman:pathto')
+
 
 # --------REQ5--------------
 def efectoSuspension(catalog,aeropuerto):
