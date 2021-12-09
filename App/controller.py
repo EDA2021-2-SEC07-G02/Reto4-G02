@@ -136,5 +136,8 @@ def bonoRequerimiento2(catalog,resultados):
 def bonoRequerimiento34(catalog,resultados):
     return model.bonoRequerimiento34(catalog,resultados)
 
+def bonoRequerimiento5(catalog,resultados,aer):
+    return model.bonoRequerimiento5(catalog,resultados,aer)
+
 def bonoAPI(catalog,ciudad1,ciudad2):
     return model.bonoAPI(catalog,ciudad1,ciudad2)

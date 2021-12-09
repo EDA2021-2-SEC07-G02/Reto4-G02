@@ -397,6 +397,9 @@ while True:
         aeropuertoCerrado=input("Ingrese el nombre del aeropuerto afectado: ")
         resultado=controller.efectoSuspension(catalog,aeropuertoCerrado)
         printAeropuertosAfectados(resultado,aeropuertoCerrado)
+        mostrar=input("Desea mostrar el mapa de viaje [y/n]: ")
+        if mostrar == "y":
+            display(controller.bonoRequerimiento5(catalog,resultado[0],aeropuertoCerrado))
         pass
 
     elif int(inputs[0]) == 6:     
