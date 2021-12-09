@@ -44,7 +44,7 @@ from DISClib.Algorithms.Graphs import prim
 from DISClib.ADT import queue as q
 from DISClib.Algorithms.Trees import traversal as traversal
 from DISClib.Utils import error as error
-#from amadeus import Client, ResponseError
+from amadeus import Client, ResponseError
 from math import radians, cos, sin, asin, sqrt
 assert cf
 
@@ -140,7 +140,6 @@ def cityDict(ciudad):
     """
     aeropuertoCercanoKey(ciudad)
     dictValue={"ListaCiudades":None,
-                "AeropuertoCercano":None, #BORRAR
                 "Homonima":False,
                 "ListaAeropuertos":None,
                 "NHom":0}
@@ -398,8 +397,6 @@ def puntosInterconexion(catalog,sample=5):
             if lt.size(listaRespuesta)>=sample:
                 break
         i-=1
-    print(mp.get(catalog["CiudadesTabla"],"Springfield"))
-    print(mp.get(catalog["CiudadesTabla"],"Lisbon"))
     return listaRespuesta
 
 
@@ -479,17 +476,39 @@ def caminoCorto(catalog,aeropuerto1,aeropuerto2):
     los más cercanos se utilizan funciones complementarias
     que interactuan con el usuario
     """
-    busqueda=djk.Dijkstra(catalog["AeropuertosRutasGraph"],aeropuerto1)
+    distCorta=0
+    ruta=lt.newList()
+    lt.addLast(ruta,{'vertexA': 'NO EXISTE', 'vertexB': 'NO EXISTE', 'weight': -1000, 'lineaA': 'N/A'})
     
-    if djk.hasPathTo(busqueda,aeropuerto2):
-        distCorta=djk.distTo(busqueda,aeropuerto2)
-        ruta=djk.pathTo(busqueda,aeropuerto2)
-    #print(busqueda)
+    if (aeropuerto1 is not None) and (aeropuerto2 is not None):
+        if gr.containsVertex(catalog["AeropuertosRutasGraph"],aeropuerto1) and  gr.containsVertex(catalog["AeropuertosRutasGraph"],aeropuerto2):
+            busqueda=djk.Dijkstra(catalog["AeropuertosRutasGraph"],aeropuerto1)
+            
+            if djk.hasPathTo(busqueda,aeropuerto2):
+                distCorta=djk.distTo(busqueda,aeropuerto2)
+                ruta=djk.pathTo(busqueda,aeropuerto2)
+        #print(busqueda)
+    # else:
+    #     distCorta=0
+    #     ruta=lt.newList()
+    #     lt.addLast(ruta,{'vertexA': 'NO EXISTE', 'vertexB': 'NO EXISTE', 'weight': -1000, 'lineaA': 'N/A'})
+    listaParadas=ciudadesParada(catalog,ruta)
+    return distCorta,ruta,listaParadas
+
+def ciudadesParada(catalog,ruta):
+    listaInfo=lt.newList("ARRAY_LIST")
+    if lt.firstElement(ruta)["vertexA"]!='NO EXISTE':
+        for ciudad in lt.iterator(ruta):
+            vertexA=ciudad["vertexA"]
+            lt.addLast(listaInfo,mp.get(catalog["AeropuertosTabla"],vertexA)["value"])
     else:
-        distCorta=0
-        ruta=lt.newList()
-        lt.addLast(ruta,{'vertexA': 'NO EXISTE', 'vertexB': 'NO EXISTE', 'weight': -1000, 'lineaA': 'N/A'})
-    return distCorta,ruta
+        element={'id': '-', 'Name': '-', 
+        'City': "-", 'Country': '-', 
+        'IATA': '-'}
+        lt.addLast(listaInfo,element)
+
+    return listaInfo
+    
 
 # --------REQ4--------------
 def mstMillasViajero(catalog,millas=1985,aeropuertoOrigen="LIS"): #-> Completar
@@ -785,8 +804,7 @@ def infoSCC(catalog,SCC):
 # BONO API
 # -----------------------------------------------------------   
 
-def bonoAPI(ciudad1,ciudad2):
-    print(os.getenv('AMADEUS_CLIENT_ID'))
+def bonoAPI(catalog,ciudad1,ciudad2):
     amadeus = Client(client_id=os.getenv('AMADEUS_CLIENT_ID'),
                     client_secret=os.getenv('AMADEUS_CLIENT_SECRET'))
 
@@ -794,8 +812,6 @@ def bonoAPI(ciudad1,ciudad2):
         '''
         What relevant airports are there around a specific location?
         '''
-        response = amadeus.reference_data.locations.airports.get(longitude=49.000, latitude=2.55)
-        print(response.data)
         lat1=ciudad1["lat"]
         lng1=ciudad1["lng"]
         lat2=ciudad2["lat"]
@@ -806,7 +822,8 @@ def bonoAPI(ciudad1,ciudad2):
         IATA2=respuestaCiudad2["iataCode"] #código IATA
         distancia1=respuestaCiudad1["distance"]["value"] #distancia entre el aeropuerto y la coordenada
         distancia2=respuestaCiudad1["distance"]["value"]
-        return IATA1,IATA2,distancia1,distancia2
+        camino=caminoCorto(catalog,IATA1,IATA2)
+        return IATA1,IATA2,distancia1,distancia2,camino
     except ResponseError as error:
         raise error
 

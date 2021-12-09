@@ -20,6 +20,7 @@
  * along withthis program.  If not, see <http://www.gnu.org/licenses/>.
  """
 
+from math import dist
 import config as cf
 import sys
 import controller
@@ -191,14 +192,14 @@ def printEscogerCiudad(tipoCiudad):
         continuar=False
         ciudadOrigen=None
     
-    return continuar,ciudadOrigen[1],ciudadOrigen[0]
+    return continuar,ciudadOrigen[1],ciudadOrigen[0],ciudadOrigen[2]
 
 
-def printAeropuertosR3(aeropuerto1,aeropuerto2):
+def printAeropuertosR3(aeropuerto1,aeropuerto2,distancia1,distancia2):
     print("*"*50)
-    print("El aeropuerto de origen será: ",aeropuerto1)
+    print("El aeropuerto de origen será: ",aeropuerto1,"Con una distancia a la ciudad de: ",distancia1)
     #Hacer pretty table
-    print("El aeropuerto de salida será: ",aeropuerto2)
+    print("El aeropuerto de salida será: ",aeropuerto2,"Con una distancia a la ciudad de: ",distancia2)
     print("*"*15+"RESULTADOS"+"*"*15)
     pass
 
@@ -225,15 +226,34 @@ def printMstMillasViajero(res,millas_usuario):
     
     print
 
-def printRutaMasCorta(resultado):
-    distCorta=resultado[0]
-    ruta=resultado[1]
-    print("La distancia total es: "+str(distCorta))
+def printRutaMasCorta(resultado,opcion=3):
+    if opcion==3:
+        distCorta=resultado[0]
+        print("La distancia total es: "+str(distCorta))
+        ruta=resultado[1]
+        paradas=resultado[2]
+    elif opcion==6: #BONO API
+        IATA1,IATA2,distancia1,distancia2,camino=resultado
+        print("El aeropuerto de origen es: ",IATA1," El cual posee una distancia hacía la ciudad de: ",distancia1)
+        print("El aeropuerto de llegada es: ",IATA2," El cual posee una distancia hacía la ciudad de: ",distancia2)
+        ruta=camino[1]
+        paradas=camino[2]
+        print(ruta)
+   
     print("La ruta es: ")
     keys=["lineaA","vertexA","vertexB","weight"]
     fieldNames=["Aerolínea","Origen","Destino","Distancia KM"]
     maxWidth = {"Aerolínea":5,"Origen":10,"Destino":10,"Distancia KM":10}
     printPrettyTable(ruta,keys,fieldNames,maxWidth,sample=lt.size(ruta),ultimas=False)
+    printParadas(paradas)
+
+def printParadas(resultado):
+    listaParadas=resultado
+    print("Las paradas son: ")
+    keys=["IATA","Name","City","Country"]
+    fieldNames=["IATA","Name","City","Country"]
+    maxWidth = {"IATA":8,"Name":20,"City":20,"Country":20}
+    printPrettyTable(listaParadas,keys,fieldNames,maxWidth,sample=lt.size(listaParadas),ultimas=False)
 
 def printAeropuertosAfectados(resultado,aeropuerto):
     print("*"*50)
@@ -344,7 +364,9 @@ while True:
                 #print(infoSalida)
                 aeropuerto1=infoOrigen[1]
                 aeropuerto2=infoSalida[1]
-                printAeropuertosR3(aeropuerto1,aeropuerto2)
+                distancia1=infoOrigen[3]
+                distancia2=infoOrigen[3]
+                printAeropuertosR3(aeropuerto1,aeropuerto2,distancia1,distancia2)
                 #print(aeropuerto1,aeropuerto2)
                 resultado=controller.caminoCorto(catalog,aeropuerto1,aeropuerto2)
                 printRutaMasCorta(resultado)
@@ -369,22 +391,30 @@ while True:
         pass
 
     elif int(inputs[0]) == 6:     
-        ciudad1=input("Ingrese la ciudad de origen: ")
+        infoOrigen=printEscogerCiudad("Origen")
         if infoOrigen[0]:
             infoSalida=printEscogerCiudad("Destino")
             if infoSalida[0]:
                 ciudad1=infoOrigen[2]
                 ciudad2=infoSalida[2]
-                resultado=controller.bonoAPI(ciudad1,ciudad2)
-                print(resultado)
-
+                resultado=controller.bonoAPI(catalog,ciudad1,ciudad2)
+                printRutaMasCorta(resultado,opcion=6)
 
     elif int(inputs[0]) == 7:
-        print("por implementar")
+        print("Ejecutar las opciones anteriores y visualizar el mapa")
         pass
 
     else:
         sys.exit(8)
     input("\nDuración: "+str((process_time()-tiempoInicial)*1000)+"ms\nPresione enter para continuar...")
     print("")
-sys.exit(8)
+    sys.exit(8)
+
+
+if __name__ == "__main__":
+    threading.stack_size(67108864)  # 64MB stack
+    sys.setrecursionlimit(2 ** 20)
+    thread = threading.Thread(target=thread_cycle)
+    thread.start()
+
+
