@@ -385,7 +385,7 @@ while True:
         printMstMillasViajero(resultado,millas_usuario)
 
     elif int(inputs[0]) == 5:
-        aeropuertoCerrado=input("Ingrese el nombre del aeropuerto afectado")
+        aeropuertoCerrado=input("Ingrese el nombre del aeropuerto afectado: ")
         resultado=controller.efectoSuspension(catalog,aeropuertoCerrado)
         printAeropuertosAfectados(resultado,aeropuertoCerrado)
         pass
@@ -408,7 +408,7 @@ while True:
         sys.exit(8)
     input("\nDuración: "+str((process_time()-tiempoInicial)*1000)+"ms\nPresione enter para continuar...")
     print("")
-    sys.exit(8)
+    
 
 
 if __name__ == "__main__":

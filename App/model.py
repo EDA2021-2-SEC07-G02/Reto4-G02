@@ -604,7 +604,7 @@ def edgesMSTeditada(graph, search):
 def efectoSuspension(catalog,aeropuerto):
     adyacentesAfectados=gr.adjacents(catalog["AeropuertosRutasGraph"],aeropuerto)
     dirigido=mp.get(catalog["AeropuertosTabla"],aeropuerto)["value"]["connections"]
-    nodirigido=lt.size(gr.adjacents(catalog["AeropuertosRutasDoblesGraph"],aeropuerto))
+    nodirigido=gr.degree(catalog["AeropuertosRutasDoblesGraph"],aeropuerto)
     respuestaLista=lt.newList("ARRAY_LIST")
     for aeropuertoAfectado in lt.iterator(adyacentesAfectados):
         info=mp.get(catalog["AeropuertosTabla"],aeropuertoAfectado)["value"]
