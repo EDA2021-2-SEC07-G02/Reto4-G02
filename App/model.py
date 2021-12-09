@@ -280,8 +280,9 @@ def addRutasGraphDirigido(catalog,route):
     peso=float(route["distance_km"])
     linea=route["Airline"]
     addAeropuertoGraf(catalog,aeropuertoSalida,"AeropuertosRutasGraph")
-    agregarNumeroConexiones(catalog,aeropuertoLlegada,aeropuertoSalida) #se añaden keys a la tabla de aeropuertos
-    gr.addEdgeLinea(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada,peso,linea)
+    if gr.getEdge(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada) is None:
+        agregarNumeroConexiones(catalog,aeropuertoLlegada,aeropuertoSalida) #se añaden keys a la tabla de aeropuertos
+        gr.addEdgeLinea(catalog["AeropuertosRutasGraph"],aeropuertoSalida,aeropuertoLlegada,peso,linea)
 
 def agregarNumeroConexiones(catalog,aeropuertoLlegada,aeropuertoSalida):
     """
@@ -323,14 +324,15 @@ def addRutasNoDirigido(catalog):
             adyacentes=gr.adjacentEdges(catalog["AeropuertosRutasGraph"],aeropuertoSalida)#gr.adjacents(catalog["AeropuertosRutasGraph"],aeropuertoSalida)
             for aeropuertoLlegadaEdge in lt.iterator(adyacentes):#voy a recorrer los adyacentes
                 aeropuertoLlegada=aeropuertoLlegadaEdge["vertexB"]
-                linea=aeropuertoLlegadaEdge["lineaA"] #obtengo la línea aérea
-                peso=gr.getEdgeLinea(catalog["AeropuertosRutasGraph"],aeropuertoLlegada,aeropuertoSalida,linea) 
-                rutaDigraphS_L=gr.getEdgeLinea(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada,linea)
-                rutaDigraphL_S=gr.getEdgeLinea(catalog["AeropuertosRutasDoblesGraph"],aeropuertoLlegada,aeropuertoSalida,linea)
+                #linea=aeropuertoLlegadaEdge["lineaA"] #obtengo la línea aérea
+                peso=gr.getEdge(catalog["AeropuertosRutasGraph"],aeropuertoLlegada,aeropuertoSalida) 
+                rutaDigraphS_L=gr.getEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada)
+                rutaDigraphL_S=gr.getEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoLlegada,aeropuertoSalida)
                 # print(aeropuertoSalida,aeropuertoLlegada,peso)
 
                 if (peso is not None) and (rutaDigraphS_L is None) and (rutaDigraphL_S is None): #si el camino es bidireccional y aún no existe el arco de a->b y de b-> a se adiciona al grafo no dirigido
-                    gr.addEdgeLinea(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada,peso["weight"],linea)
+                    gr.addEdge(catalog["AeropuertosRutasDoblesGraph"],aeropuertoSalida,aeropuertoLlegada,peso["weight"])
+    pruebasGrafos(catalog)
                
     
     
