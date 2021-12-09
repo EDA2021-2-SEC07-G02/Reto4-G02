@@ -349,8 +349,8 @@ while True:
         pass
 
     elif int(inputs[0]) == 2:
-        aeropuerto1="LED"#input("Ingrese el código IATA del aeropuerto1: ")
-        aeropuerto2="RTP"#input("Ingrese el código IATA del aeropuerto2: ")
+        aeropuerto1=input("Ingrese el código IATA del aeropuerto1: ")
+        aeropuerto2=input("Ingrese el código IATA del aeropuerto2: ")
         resultado=controller.clustersTrafico(catalog,aeropuerto1,aeropuerto2)
         printCluster(resultado,aeropuerto1,aeropuerto2)
         display(controller.bonoRequerimiento2(catalog,resultado))
@@ -385,7 +385,7 @@ while True:
         printMstMillasViajero(resultado,millas_usuario)
 
     elif int(inputs[0]) == 5:
-        aeropuertoCerrado="DXB" #input("Ingrese el nombre del aeropuerto afectado")
+        aeropuertoCerrado=input("Ingrese el nombre del aeropuerto afectado")
         resultado=controller.efectoSuspension(catalog,aeropuertoCerrado)
         printAeropuertosAfectados(resultado,aeropuertoCerrado)
         pass

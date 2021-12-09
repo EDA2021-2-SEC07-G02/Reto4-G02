@@ -370,7 +370,6 @@ def arbolNConexiones(catalog):
                 om.put(catalog['NumeroConexionesArbol'],conexiones,lista)
 
     catalog["RankingConexiones"]=inorderRanking(catalog['NumeroConexionesArbol'])
-    print("TAMAÑO ÁRBOL: ", om.size(catalog['NumeroConexionesArbol']))
 
 
 # -----------------------------------------------------------
@@ -610,7 +609,6 @@ def efectoSuspension(catalog,aeropuerto):
     for aeropuertoAfectado in lt.iterator(adyacentesAfectados):
         info=mp.get(catalog["AeropuertosTabla"],aeropuertoAfectado)["value"]
         lt.addLast(respuestaLista,info)
-    print(dirigido,nodirigido)
     return respuestaLista,dirigido,nodirigido
 
 # -----------------------------------------------------------
