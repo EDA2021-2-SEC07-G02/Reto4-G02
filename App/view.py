@@ -217,11 +217,11 @@ def printMstMillasViajero(res,millas_usuario):
     print("Distancia en kilometros de millas:",round(kmUsuario,2))
 
     print("\n\n----- Ruta con mayor cantidad de paradas -------")
-    printPrettyTable(ret,['lineaA','vertexA','vertexB','weight'],['Aerolinea','Origen','Destino','Distancia [km]'],{'lineaA':20,'vertexA':20,'vertexB':20,'weight':20},sample=lt.size(ret))
+    printPrettyTable(ret,['vertexA','vertexB','weight'],['Origen','Destino','Distancia [km]'],{'vertexA':20,'vertexB':20,'weight':20},sample=lt.size(ret))
     print("El pasajero le quedan faltando (-) o sobrando (+)) millas",round((kmUsuario-millas_cam)/2,2),"millas para completar el viaje")
 
     print("\n\n----- Ruta propuesta enunciado -------")
-    printPrettyTable(res_simple,['lineaA','vertexA','vertexB','weight'],['Aerolinea','Origen','Destino','Distancia [km]'],{'lineaA':20,'vertexA':20,'vertexB':20,'weight':20},sample=lt.size(res_simple))
+    printPrettyTable(res_simple,['vertexA','vertexB','weight'],['Origen','Destino','Distancia [km]'],{'vertexA':20,'vertexB':20,'weight':20},sample=lt.size(res_simple))
     print("El pasajero le quedan faltando (-) o sobrando (+)) millas",round((kmUsuario-millas_simple)/1.6,2),"millas para completar el viaje")
     
     print
@@ -370,6 +370,9 @@ while True:
                 #print(aeropuerto1,aeropuerto2)
                 resultado=controller.caminoCorto(catalog,aeropuerto1,aeropuerto2)
                 printRutaMasCorta(resultado)
+                mostrar=input("Desea mostrar el mapa de viaje [y/n]: ")
+                if mostrar == "y":
+                    display(controller.bonoRequerimiento34(catalog,resultado[1]))
             else:
                 print("Error en el nombre")
         else:
@@ -383,6 +386,12 @@ while True:
         aeropuerto = input("Ingrese código IATA aeropuerto: ")
         resultado=controller.mstMillasViajero(catalog, millas_usuario, aeropuerto)
         printMstMillasViajero(resultado,millas_usuario)
+        mostrar=input("Desea mostrar el mapa de viaje [y/n]: ")
+        if mostrar == "y":
+            print("\nRuta maximizando paradas")
+            display(controller.bonoRequerimiento34(catalog,resultado[2]))
+            print("\nRuta propuesta enunciado")
+            display(controller.bonoRequerimiento34(catalog,resultado[0]))
 
     elif int(inputs[0]) == 5:
         aeropuertoCerrado=input("Ingrese el nombre del aeropuerto afectado: ")

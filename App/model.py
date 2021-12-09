@@ -798,7 +798,84 @@ def infoSCC(catalog,SCC):
         lt.addLast(respuesta,aeropuertoInfo)
     print(respuesta)
 
-# --------REQ3--------------
+# --------REQ3 & REQ4--------------
+def bonoRequerimiento34(catalog,resultado):
+    mapgraf=folium.Map(location=[0,0],zoom_start=1) #Se crea el mapa
+
+    for edge in lt.iterator(resultado):
+        aeropuertoA=mp.get(catalog["AeropuertosTabla"],edge["vertexA"])["value"]
+        aeropuertoB=mp.get(catalog["AeropuertosTabla"],edge["vertexB"])["value"]
+
+        latA=float(aeropuertoA["Latitude"])
+        longA=float(aeropuertoA["Longitude"])
+        latB=float(aeropuertoB["Latitude"])
+        longB=float(aeropuertoB["Longitude"])
+
+        IATA=aeropuertoA["IATA"]
+        ciudadPais=aeropuertoA["City"] +", "+aeropuertoA["Country"]
+        
+        infoPopUp=str("<br><b> Código IATA: </b> "+IATA
+                    + "<br><b> Ciudad, País: </b>"+ciudadPais)
+        infoHTML=folium.Html(infoPopUp,script=True)
+
+        
+
+        (folium.Marker(location=[latA, longA], popup=folium.Popup(infoHTML, parse_html=False),
+                        icon=folium.Icon(color="darkpurple"))).add_to(mapgraf)
+      
+        loc = [(latA, longA),(latB, longB)]
+        folium.PolyLine(loc, color='red', weight=7, opacity=0.5).add_to(mapgraf)   
+
+    IATA=aeropuertoB["IATA"]
+    ciudadPais=aeropuertoB["City"] +", "+aeropuertoB["Country"]
+    infoPopUp=str("<br><b> Código IATA: </b> "+IATA
+                    + "<br><b> Ciudad, País: </b>"+ciudadPais)
+    infoHTML=folium.Html(infoPopUp,script=True)
+    (folium.Marker(location=[latB, longB], popup=folium.Popup(infoHTML, parse_html=False),
+                        icon=folium.Icon(color="darkpurple"))).add_to(mapgraf)
+
+
+    return mapgraf
+
+
+def bonoRequerimiento5(catalog,resultado):
+    mapgraf=folium.Map(location=[0,0],zoom_start=1) #Se crea el mapa
+
+    for edge in lt.iterator(resultado):
+        aeropuertoA=mp.get(catalog["AeropuertosTabla"],edge["vertexA"])["value"]
+        aeropuertoB=mp.get(catalog["AeropuertosTabla"],edge["vertexB"])["value"]
+
+        latA=float(aeropuertoA["Latitude"])
+        longA=float(aeropuertoA["Longitude"])
+        latB=float(aeropuertoB["Latitude"])
+        longB=float(aeropuertoB["Longitude"])
+
+        IATA=aeropuertoA["IATA"]
+        ciudadPais=aeropuertoA["City"] +", "+aeropuertoA["Country"]
+        
+        infoPopUp=str("<br><b> Código IATA: </b> "+IATA
+                    + "<br><b> Ciudad, País: </b>"+ciudadPais)
+        infoHTML=folium.Html(infoPopUp,script=True)
+        
+        (folium.Marker(location=[latA, longA], popup=folium.Popup(infoHTML, parse_html=False),
+                        icon=folium.Icon(color="darkpurple"))).add_to(mapgraf)
+      
+
+        IATA=aeropuertoB["IATA"]
+        ciudadPais=aeropuertoB["City"] +", "+aeropuertoB["Country"]
+        infoPopUp=str("<br><b> Código IATA: </b> "+IATA
+                        + "<br><b> Ciudad, País: </b>"+ciudadPais)
+        infoHTML=folium.Html(infoPopUp,script=True)
+        (folium.Marker(location=[latB, longB], popup=folium.Popup(infoHTML, parse_html=False),
+                            icon=folium.Icon(color="darkpurple"))).add_to(mapgraf)
+
+        loc = [(latA, longA),(latB, longB)]
+        folium.PolyLine(loc, color='red', weight=7, opacity=0.5).add_to(mapgraf)   
+
+
+
+
+    return mapgraf
 
 # -----------------------------------------------------------
 # BONO API
